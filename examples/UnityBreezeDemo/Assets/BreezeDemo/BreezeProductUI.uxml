@@ -1,0 +1,9 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:Button name="product-item-1" class="product-item" style="flex-direction: row; padding: 15px; margin-bottom: 10px; border-width: 1px; border-color: rgba(0,0,0,0.2); background-color: rgba(255,255,255,0.1);">
+        <ui:Image name="product-icon-1" class="product-icon" style="width: 80px; height: 80px; margin-right: 15px; background-color: rgba(200,200,200,0.3);"/>
+        <ui:VisualElement style="flex-grow: 1; flex-direction: column; justify-content: space-between;">
+            <ui:Label name="product-description-1" text="Premium Wireless Headphones - Noise Cancelling" class="product-description" style="font-size: 16px; margin-bottom: 8px; -unity-text-align: upper-left;"/>
+            <ui:Label name="product-price-1" text="$199.99" class="product-price" style="font-size: 18px; -unity-font-style: bold; color: rgba(0,150,0,1);"/>
+        </ui:VisualElement>
+    </ui:Button>
+</ui:UXML>

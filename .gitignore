@@ -1,0 +1,82 @@
+# Rust
+target
+**/*.rs.bk
+Cargo.lock
+
+# Unity
+**/[Ll]ibrary/
+**/[Tt]emp/
+**/[Oo]bj/
+**/[Bb]uild/
+**/[Bb]uilds/
+**/[Ll]ogs/
+**/UserSettings
+**/Assets/AssetStoreTools*
+**/*.csproj
+**/*.unityproj
+**/*.sln
+**/*.slnx
+**/*.suo
+**/*.user
+**/*.userprefs
+**/*.pidb
+**/*.booproj
+**/*.svd
+**/*.pdb
+**/*.mdb
+**/*.opendb
+**/*.VC.db
+**/Assets/Plugins/**/*.bundle/
+**/Assets/Plugins/**/*.framework/
+**/Assets/Plugins/**/*.xcframework/
+mono_crash.*.json
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+/**/*.app
+
+
+# Xcode
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+!*.xcodeproj/project.xcworkspace/
+*.xcworkspace/*
+!*.xcworkspace/contents.xcworkspacedata
+!*.xcworkspace/xcshareddata/
+xcuserdata/
+*.xcuserstate
+*.xcuserdatad/
+build/
+DerivedData/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Swift Package Manager
+.swiftpm/
+.build/
+
+# Build artifacts
+*.a
+*.o
+*.dylib
+*.so
+*.dll
+
+.gradle

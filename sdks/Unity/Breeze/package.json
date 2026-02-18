@@ -1,0 +1,22 @@
+{
+  "name": "cash.breeze.payment-unity",
+  "version": "1.0.0",
+  "displayName": "Breeze Payment SDK",
+  "description": "Unity Breeze Payment SDK for iOS and Android.",
+  "author": {
+    "name": "Breeze",
+    "email": "support@breeze.cash",
+    "url": "https://breeze.cash"
+  },
+  "keywords": [
+    "unity",
+    "breeze",
+    "payment",
+    "iOS",
+    "Android"
+  ],
+  "repoUrl": "https://github.com/breeze-com/breeze-unity.git",
+  "dependencies": {
+    "com.unity.nuget.newtonsoft-json": "3.2.2"
+  }
+}

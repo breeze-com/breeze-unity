@@ -1,0 +1,33 @@
+apply plugin: 'com.android.library'
+
+dependencies {
+    implementation fileTree(dir: 'bin', include: ['*.jar'])
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    compileOnly files("${project.rootDir}/unityLibrary/libs/unity-classes.jar")
+    implementation 'androidx.browser:browser:1.8.0'
+}
+
+android {
+    namespace = "com.breeze.sdk"
+    compileSdk 36
+    buildToolsVersion = "36.0.0"
+
+    defaultConfig {
+        minSdk 25
+        targetSdk 36
+    }
+
+    lint {
+        abortOnError false
+    }
+
+    sourceSets {
+        main {
+            // manifest.srcFile 'AndroidManifest.xml' // AndroidManifest.xml was not found in the plugin during generation of this file
+            java.srcDirs = ['src']
+            res.srcDirs = ['res']
+            assets.srcDirs = ['assets']
+            jniLibs.srcDirs = ['libs']
+        }
+    }
+}
