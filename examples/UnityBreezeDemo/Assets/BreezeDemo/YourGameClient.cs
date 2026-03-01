@@ -8,6 +8,7 @@ public class CreateOrderInput
 {
     public string ProductId { get; set; }
     public int Quantity { get; set; }
+    public string Context { get; set; }
 }
 
 public class CreateOrderResult
@@ -55,7 +56,7 @@ public class YourGameClient : MonoBehaviour
             {
                 ReferenceId = "user-superapp-test1"
             },
-            Context = null
+            Context = order.Context
         };
         string jsonPayload;
         try

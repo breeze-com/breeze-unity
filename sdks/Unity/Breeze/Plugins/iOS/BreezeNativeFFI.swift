@@ -93,3 +93,52 @@ public func brz_show_payment_options_dialog(
 public func brz_dismiss_payment_page_view() {
     BreezeNative.instance.brzDismissPaymentPageView()
 }
+
+struct BrzShowPaymentWebviewRequest: Codable {
+    let directPaymentUrl: String?
+    let data: String?
+}
+
+public enum BrzPaymentWebviewDismissReason: Int32 {
+    case dismissed = 0
+    case paymentSuccess = 1
+    case paymentFailure = 2
+    case loadError = 3
+}
+
+public enum BrzShowPaymentWebviewResultCode: Int32 {
+    case success = 0
+    case nullInput = 1
+    case invalidUtf8 = 2
+    case jsonDecodingFailed = 3
+    case invalidUrl = 4
+}
+
+public typealias BrzShowPaymentWebviewResultCodeC = Int32
+
+public typealias BrzPaymentWebviewDismissCallbackC =
+    @convention(c) (Int32, UnsafePointer<CChar>?) -> Void
+
+public typealias BrzPaymentWebviewDismissCallback =
+    (BrzPaymentWebviewDismissReason, String?) -> Void
+
+@_cdecl("brz_show_payment_webview")
+public func brz_show_payment_webview(
+    _ jsonRequest: UnsafePointer<CChar>?,
+    _ onDismiss: BrzPaymentWebviewDismissCallbackC?
+) -> BrzShowPaymentWebviewResultCodeC {
+    let swiftCallback: BrzPaymentWebviewDismissCallback? = onDismiss.map { cCallback in
+        return { reason, data in
+            let dataPtr = toCString(data)
+            defer {
+                freeCString(dataPtr)
+            }
+            cCallback(reason.rawValue, dataPtr)
+        }
+    }
+
+    return BreezeNative.instance.brzShowPaymentWebview(
+        jsonRequest: jsonRequest,
+        onDismiss: swiftCallback
+    ).rawValue
+}

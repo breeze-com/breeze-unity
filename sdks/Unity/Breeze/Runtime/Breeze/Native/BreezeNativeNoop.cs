@@ -40,4 +40,14 @@ public class BreezeNativeNoop : IBreezeNative
     {
         throw new NotImplementedException();
     }
+
+    public BrzShowPaymentWebviewResultCode ShowPaymentWebview(
+        BrzShowPaymentWebviewRequest request,
+        BrzPaymentWebviewDismissCallback onDismiss
+    )
+    {
+        string requestJson = JsonConvert.SerializeObject(request);
+        Debug.Log($"ShowPaymentWebview: Not implemented, request: {requestJson}");
+        return BrzShowPaymentWebviewResultCode.Success;
+    }
 }

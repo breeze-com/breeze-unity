@@ -88,3 +88,39 @@ public enum BrzShowPaymentOptionsResultCode : Int32
     InvalidUtf8 = 2,
     JsonDecodingFailed = 3
 }
+
+public class BrzShowPaymentWebviewRequest
+{
+    [JsonProperty("directPaymentUrl")]
+    public string DirectPaymentUrl { get; set; }
+
+    [JsonProperty("data")]
+    public string Data { get; set; }
+}
+
+public delegate void BrzPaymentWebviewDismissCallback(BrzPaymentWebviewDismissReason reason, string data);
+
+[JsonConverter(typeof(StringEnumConverter))]
+public enum BrzPaymentWebviewDismissReason : Int32
+{
+    [EnumMember(Value = "Dismissed")]
+    Dismissed = 0,
+
+    [EnumMember(Value = "PaymentSuccess")]
+    PaymentSuccess = 1,
+
+    [EnumMember(Value = "PaymentFailure")]
+    PaymentFailure = 2,
+
+    [EnumMember(Value = "LoadError")]
+    LoadError = 3,
+}
+
+public enum BrzShowPaymentWebviewResultCode : Int32
+{
+    Success = 0,
+    NullInput = 1,
+    InvalidUtf8 = 2,
+    JsonDecodingFailed = 3,
+    InvalidUrl = 4,
+}
