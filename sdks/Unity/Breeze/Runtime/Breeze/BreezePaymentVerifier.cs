@@ -32,6 +32,8 @@ public class BreezePaymentVerifier
             throw new ArgumentNullException(nameof(config));
         if (string.IsNullOrEmpty(config.GameServerBaseUrl))
             throw new ArgumentException("GameServerBaseUrl is required", nameof(config));
+        if (!config.GameServerBaseUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            throw new ArgumentException("GameServerBaseUrl must use HTTPS", nameof(config));
 
         _config = config;
     }

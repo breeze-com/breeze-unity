@@ -81,7 +81,9 @@ public sealed class Breeze
     [AOT.MonoPInvokeCallback(typeof(BrzPaymentDialogDismissCallback))]
     public static void NotifyOnPaymentOptionsDialogDismissed(BrzPaymentDialogDismissReason reason, string data)
     {
+#if BREEZE_DEBUG
         UnityEngine.Debug.Log($"dialog dismissed, reason: {reason}, data: {data}");
+#endif
 
         if (_instance != null)
         {

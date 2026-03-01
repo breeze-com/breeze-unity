@@ -32,12 +32,14 @@ public class BreezeNativeNoop : IBreezeNative
     )
     {
         string requestJson = JsonConvert.SerializeObject(request);
+#if BREEZE_DEBUG
         Debug.Log($"ShowPaymentOptionsDialog: Not implemented, request: {requestJson}");
+#endif
         return BrzShowPaymentOptionsResultCode.Success;
     }
 
     public void DismissPaymentPageView()
     {
-        throw new NotImplementedException();
+        Debug.Log("BreezeNativeNoop: DismissPaymentPageView (no-op in editor)");
     }
 }
