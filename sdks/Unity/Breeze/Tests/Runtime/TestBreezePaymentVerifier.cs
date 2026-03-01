@@ -37,8 +37,29 @@ public class TestBreezePaymentVerifier
     public void Constructor_WhitespaceGameServerBaseUrl_ThrowsArgumentException()
     {
         var config = new BrzPaymentVerificationConfig { GameServerBaseUrl = "   " };
-        // string.IsNullOrEmpty doesn't catch whitespace, so this should succeed
-        // This documents current behavior — whitespace-only URL is accepted by constructor
+        // Whitespace doesn't start with "https://" so the HTTPS check throws
+        Assert.Throws<ArgumentException>(() => new BreezePaymentVerifier(config));
+    }
+
+    [Test]
+    public void Constructor_HttpBaseUrl_ThrowsArgumentException()
+    {
+        var config = new BrzPaymentVerificationConfig { GameServerBaseUrl = "http://api.example.com" };
+        var ex = Assert.Throws<ArgumentException>(() => new BreezePaymentVerifier(config));
+        Assert.IsTrue(ex.Message.Contains("HTTPS"));
+    }
+
+    [Test]
+    public void Constructor_FtpBaseUrl_ThrowsArgumentException()
+    {
+        var config = new BrzPaymentVerificationConfig { GameServerBaseUrl = "ftp://api.example.com" };
+        Assert.Throws<ArgumentException>(() => new BreezePaymentVerifier(config));
+    }
+
+    [Test]
+    public void Constructor_HttpsUpperCase_DoesNotThrow()
+    {
+        var config = new BrzPaymentVerificationConfig { GameServerBaseUrl = "HTTPS://api.example.com" };
         Assert.DoesNotThrow(() => new BreezePaymentVerifier(config));
     }
 

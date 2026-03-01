@@ -358,12 +358,11 @@ public class TestBreezeSecurity
     }
 
     [Test]
-    public void BreezePaymentVerifier_HttpBaseUrl_ShouldWarn()
+    public void BreezePaymentVerifier_HttpBaseUrl_ThrowsArgumentException()
     {
-        // Currently accepted — this test documents the security gap
+        // HTTPS is enforced by the constructor
         var config = new BrzPaymentVerificationConfig { GameServerBaseUrl = "http://insecure.game.com" };
-        var verifier = new BreezePaymentVerifier(config);
-        Assert.IsNotNull(verifier, "HTTP URL accepted — HTTPS should be enforced");
+        Assert.Throws<ArgumentException>(() => new BreezePaymentVerifier(config));
     }
 
     // ─── Query String Injection ───
