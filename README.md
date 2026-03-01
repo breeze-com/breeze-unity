@@ -382,7 +382,9 @@ The SDK includes unit tests in `sdks/Unity/Breeze/Tests/Runtime/`:
 | `TestBreezeSingleton` | Init/uninit, re-init, cleanup |
 | `TestBreezeIntegration` | End-to-end payment flows |
 | `TestBreezeSecurity` | URL validation, HTTPS enforcement |
-| `TestBreezePaymentVerifier` | Polling, timeouts, cancellation, status parsing |
+| `TestBreezePaymentVerifier` | Polling, timeouts, cancellation, status parsing, HTTPS enforcement |
+| `TestBreezeNativeNoop` | Editor noop: DismissPaymentPageView no-op, device ID stability, interface compliance |
+| `TestAndroidCallbackParsing` | Android bridge int vs string reason parsing, dismiss reason enum coverage |
 
 Run tests via **Window** → **General** → **Test Runner** in Unity.
 
