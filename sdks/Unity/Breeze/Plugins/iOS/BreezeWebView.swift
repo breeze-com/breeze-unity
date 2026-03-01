@@ -218,7 +218,7 @@ class BreezeWebViewController: UIViewController, WKNavigationDelegate {
     private let handleBarHeight: CGFloat = 48
     private let minHeightRatio: CGFloat = 0.35
     private let maxHeightRatio: CGFloat = 0.95
-    private let defaultHeightRatio: CGFloat = 0.90
+    private let defaultHeightRatio: CGFloat = 0.60
 
     private var containerView: UIView!
     private var containerHeightConstraint: NSLayoutConstraint!
