@@ -11,7 +11,8 @@ public sealed class Breeze
     {
         if (_instance != null)
         {
-            UnityEngine.Debug.LogWarning("BreezePayment already initialized");
+            UnityEngine.Debug.LogWarning("BreezePayment already initialized. Call Uninitialize() first to re-initialize.");
+            return;
         }
         _instance = new Breeze(configuration);
     }
@@ -80,7 +81,9 @@ public sealed class Breeze
     [AOT.MonoPInvokeCallback(typeof(BrzPaymentDialogDismissCallback))]
     public static void NotifyOnPaymentOptionsDialogDismissed(BrzPaymentDialogDismissReason reason, string data)
     {
+#if BREEZE_DEBUG
         UnityEngine.Debug.Log($"dialog dismissed, reason: {reason}, data: {data}");
+#endif
 
         if (_instance != null)
         {
@@ -95,6 +98,10 @@ public sealed class Breeze
         if (this.configuration == null)
         {
             throw new ArgumentException("Configuration is required");
+        }
+        if (string.IsNullOrEmpty(this.configuration.AppScheme))
+        {
+            throw new ArgumentException("AppScheme is required in BreezeConfiguration (e.g. 'yourgame')");
         }
     }
 }

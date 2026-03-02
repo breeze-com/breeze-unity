@@ -24,7 +24,7 @@ public class BreezeUnityBridge {
     public static void sendDialogDismissed(BreezePaymentDialogDismissReason reason, String data) {
         try {
             JSONObject payload = new JSONObject();
-            payload.put("reason", reason.getValue());
+            payload.put("reason", reason.getId());
             payload.put("data", data != null ? data : "");
             String jsonPayload = payload.toString();
             sendMessage(MSG_ON_DIALOG_DISMISSED, jsonPayload);

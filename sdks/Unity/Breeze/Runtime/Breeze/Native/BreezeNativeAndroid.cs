@@ -68,14 +68,18 @@ public class BreezeNativeAndroid : IBreezeNative
         pendingDismissCallback = onDismiss;
 
         string requestJson = JsonConvert.SerializeObject(request);
+#if BREEZE_DEBUG
         Debug.Log($"brz_show_payment_options_dialog: request = {requestJson}");
+#endif
         int code = androidPluginInstance.Call<int>("showPaymentOptionsDialog", requestJson);
         return (BrzShowPaymentOptionsResultCode)code;
     }
 
     public void DismissPaymentPageView()
     {
+#if BREEZE_DEBUG
         Debug.Log("BreezeNativeAndroid: DismissPaymentPageView called (no-op on Android)");
+#endif
     }
 
     internal static void HandleDialogDismissed(BrzPaymentDialogDismissReason reason, string data)
@@ -110,7 +114,9 @@ public class BreezeAndroidCallbackReceiver : MonoBehaviour
     /// </summary>
     public void OnAndroidDialogDismissed(string jsonPayload)
     {
+#if BREEZE_DEBUG
         Debug.Log($"BreezeAndroidCallbackReceiver: OnAndroidDialogDismissed: {jsonPayload}");
+#endif
         try
         {
             var payload = JsonConvert.DeserializeObject<DialogDismissedPayload>(jsonPayload);
