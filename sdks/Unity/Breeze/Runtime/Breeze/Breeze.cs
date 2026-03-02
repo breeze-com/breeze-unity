@@ -18,48 +18,18 @@ public sealed class Breeze
 
     public static void Uninitialize()
     {
-        if (_instance != null)
-        {
-            _instance.Destroy();
-        }
         _instance = null;
     }
 
     private BreezeConfiguration configuration;
 
     public event Action<BrzPaymentDialogDismissReason, string> OnPaymentOptionsDialogDismissed;
-
-    private GameObject messenger;
+    public event Action<BrzPaymentWebviewDismissReason, string> OnPaymentWebviewDismissed;
 
     private Breeze(BreezeConfiguration configuration)
     {
         this.configuration = configuration;
         this.ValidateConfiguration();
-        this.messenger = this.InstantiateBridgeObject();
-    }
-
-    private GameObject InstantiateBridgeObject()
-    {
-        GameObject go = GameObject.Find("/BreezePay");
-        if (go == null)
-        {
-            go = new GameObject("BreezePay");
-        }
-        if (go.GetComponent<BreezeBridgeMessenger>() == null)
-        {
-            go.AddComponent<BreezeBridgeMessenger>();
-        }
-        GameObject.DontDestroyOnLoad(go);
-        return go;
-    }
-
-    private void Destroy()
-    {
-        if (messenger != null)
-        {
-            GameObject.Destroy(this.messenger);
-            this.messenger = null;
-        }
     }
 
     public string GetDeviceUniqueId()
@@ -77,6 +47,11 @@ public sealed class Breeze
         BreezeNative.Instance.DismissPaymentPageView();
     }
 
+    public void ShowPaymentWebview(BrzShowPaymentWebviewRequest request)
+    {
+        BreezeNative.Instance.ShowPaymentWebview(request, NotifyOnPaymentWebviewDismissed);
+    }
+
     [AOT.MonoPInvokeCallback(typeof(BrzPaymentDialogDismissCallback))]
     public static void NotifyOnPaymentOptionsDialogDismissed(BrzPaymentDialogDismissReason reason, string data)
     {
@@ -85,6 +60,17 @@ public sealed class Breeze
         if (_instance != null)
         {
             _instance.OnPaymentOptionsDialogDismissed?.Invoke(reason, data);
+        }
+    }
+
+    [AOT.MonoPInvokeCallback(typeof(BrzPaymentWebviewDismissCallback))]
+    public static void NotifyOnPaymentWebviewDismissed(BrzPaymentWebviewDismissReason reason, string data)
+    {
+        UnityEngine.Debug.Log($"webview dismissed, reason: {reason}, data: {data}");
+
+        if (_instance != null)
+        {
+            _instance.OnPaymentWebviewDismissed?.Invoke(reason, data);
         }
     }
 

@@ -33,4 +33,9 @@ public interface IBreezeNative
     );
 
     public void DismissPaymentPageView();
+
+    public BrzShowPaymentWebviewResultCode ShowPaymentWebview(
+        BrzShowPaymentWebviewRequest request,
+        BrzPaymentWebviewDismissCallback onDismiss
+    );
 }

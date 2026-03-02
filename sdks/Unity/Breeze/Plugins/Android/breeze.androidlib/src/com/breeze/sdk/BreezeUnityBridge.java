@@ -12,6 +12,7 @@ public class BreezeUnityBridge {
 
     // Unity Message Methods
     public static final String MSG_ON_DIALOG_DISMISSED = "OnAndroidDialogDismissed";
+    public static final String MSG_ON_WEBVIEW_DISMISSED = "OnAndroidWebViewDismissed";
 
     public static void sendMessage(String methodName, String message) {
         try {
@@ -30,6 +31,18 @@ public class BreezeUnityBridge {
             sendMessage(MSG_ON_DIALOG_DISMISSED, jsonPayload);
         } catch (Exception e) {
             Log.e(TAG, "Failed to create dismiss payload: " + e.getMessage());
+        }
+    }
+
+    public static void sendWebViewDismissed(BreezeWebViewDismissReason reason, String data) {
+        try {
+            JSONObject payload = new JSONObject();
+            payload.put("reason", reason.getId());
+            payload.put("data", data != null ? data : "");
+            String jsonPayload = payload.toString();
+            sendMessage(MSG_ON_WEBVIEW_DISMISSED, jsonPayload);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to create webview dismiss payload: " + e.getMessage());
         }
     }
 }

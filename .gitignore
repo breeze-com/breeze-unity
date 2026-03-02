@@ -80,3 +80,4 @@ Icon
 *.dll
 
 .gradle
+.vscode
