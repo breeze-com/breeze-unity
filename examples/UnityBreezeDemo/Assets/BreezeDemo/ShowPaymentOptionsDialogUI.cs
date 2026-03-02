@@ -17,6 +17,7 @@ public class ShowPaymentOptionsDialogUI : MonoBehaviour
 
     private Button btnTest;
     private Button btnShowDialog;
+    private Button btnShowWebview;
     private ToggleButtonGroup themeButtonGroup;
 
     private bool isCreatingOrder = false;
@@ -35,16 +36,19 @@ public class ShowPaymentOptionsDialogUI : MonoBehaviour
 
         var root = GetComponent<UIDocument>().rootVisualElement;
         this.btnShowDialog = root.Q<Button>("show-dialog-button");
+        this.btnShowWebview = root.Q<Button>("show-webview-button");
         this.btnTest = root.Q<Button>("test-button");
         this.themeButtonGroup = root.Q<ToggleButtonGroup>("theme-button-group");
 
         this.btnShowDialog.clicked += this.OnShowDialogClicked;
+        this.btnShowWebview.clicked += this.OnShowWebviewClicked;
         this.btnTest.clicked += this.OnTestClicked;
     }
 
     void OnDestroy()
     {
         this.btnShowDialog.clicked -= this.OnShowDialogClicked;
+        this.btnShowWebview.clicked -= this.OnShowWebviewClicked;
         this.btnTest.clicked -= this.OnTestClicked;
         Application.deepLinkActivated -= this.OnPaymentPageResult;
 
@@ -120,6 +124,76 @@ public class ShowPaymentOptionsDialogUI : MonoBehaviour
     {
         var theme = GetThemeFromGroup();
         StartCoroutine(CreateOrderAndShowPaymentDialog(theme));
+    }
+
+    void OnShowWebviewClicked()
+    {
+        StartCoroutine(CreateOrderAndShowPaymentWebview());
+    }
+
+    async Awaitable CreateOrderAndShowPaymentWebview()
+    {
+        Debug.Log("show webview clicked");
+
+        if (this.isCreatingOrder)
+        {
+            Debug.LogWarning("already creating order, please wait");
+            return;
+        }
+
+        if (this.gameClient == null)
+        {
+            Debug.LogError("gameClient is not set");
+            return;
+        }
+
+        this.isCreatingOrder = true;
+        CreateOrderResult result = null;
+        try
+        {
+            result = await this.gameClient.CreateOrderAsync(new CreateOrderInput
+            {
+                ProductId = BREEZE_PRODUCT_ID,
+                Quantity = 1,
+                Context = Application.platform == RuntimePlatform.Android ? "android" : "iap",
+            });
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"CreateOrderAsync failed. Error: {ex}");
+        }
+        finally
+        {
+            this.isCreatingOrder = false;
+        }
+
+        if (result == null)
+        {
+            Debug.LogError("failed to create order");
+            return;
+        }
+
+        Debug.Log($"webview order result url: {result.Data.Url}");
+
+        var request = new BrzShowPaymentWebviewRequest()
+        {
+            DirectPaymentUrl = result.Data.Url,
+            Data = GAME_PRODUCT_ID,
+        };
+
+        Breeze.Instance.OnPaymentWebviewDismissed += this.OnPaymentWebviewDismissed;
+        Breeze.Instance.ShowPaymentWebview(request);
+    }
+
+    void OnPaymentWebviewDismissed(BrzPaymentWebviewDismissReason reason, string data)
+    {
+        Debug.Log($"UI Example, webview dismissed, reason: {reason}, data: {data}");
+        Breeze.Instance.OnPaymentWebviewDismissed -= this.OnPaymentWebviewDismissed;
+
+        if (reason == BrzPaymentWebviewDismissReason.PaymentSuccess)
+        {
+            PlayPaymentSuccessEffect();
+        }
     }
 
     async Awaitable CreateOrderAndShowPaymentDialog(BrzPaymentOptionsTheme theme)

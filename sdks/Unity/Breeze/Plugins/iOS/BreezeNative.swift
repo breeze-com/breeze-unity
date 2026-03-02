@@ -1,6 +1,10 @@
 import Foundation
 import UIKit
 
+struct BreezeDeviceInfo: Codable {
+    let deviceId: String
+}
+
 public class BreezeNative {
     public static let instance = BreezeNative()
 
@@ -9,6 +13,20 @@ public class BreezeNative {
 
     private func getDeviceId() -> String {
         return UIDevice.current.identifierForVendor?.uuidString ?? ""
+    }
+
+    func getDeviceInfo() -> BreezeDeviceInfo {
+        return BreezeDeviceInfo(deviceId: getDeviceId())
+    }
+
+    func getDeviceInfoJSON() -> String {
+        let info = getDeviceInfo()
+        guard let data = try? JSONEncoder().encode(info),
+            let json = String(data: data, encoding: .utf8)
+        else {
+            return "{}"
+        }
+        return json
     }
 
     private func copyDataToBuffer(
@@ -66,5 +84,47 @@ public class BreezeNative {
 
     public func brzDismissPaymentPageView() {
         BreezeSafariView.activeInstance?.dismiss();
+    }
+
+    public func brzShowPaymentWebview(
+        jsonRequest: UnsafePointer<CChar>?,
+        onDismiss: BrzPaymentWebviewDismissCallback? = nil
+    ) -> BrzShowPaymentWebviewResultCode {
+        guard let jsonString = jsonRequest else {
+            print("Error: jsonString is nil")
+            return .nullInput
+        }
+
+        let json = String(cString: jsonString)
+
+        guard let jsonData = json.data(using: .utf8) else {
+            print("Error: Could not convert JSON string to data")
+            return .invalidUtf8
+        }
+
+        let decoder = JSONDecoder()
+        do {
+            let request = try decoder.decode(
+                BrzShowPaymentWebviewRequest.self, from: jsonData)
+
+            guard let urlString = request.directPaymentUrl,
+                let url = URL(string: urlString),
+                let host = url.host?.lowercased(),
+                BreezeConstants.allowedHosts.contains(where: { host.hasSuffix($0) })
+            else {
+                print("Warning: Direct payment URL is invalid or not an allowed Breeze domain")
+                return .invalidUrl
+            }
+
+            BreezeWebView.show(url: url, data: request.data, onDismiss: onDismiss)
+            return .success
+        } catch {
+            print("Error decoding JSON: \(error)")
+            return .jsonDecodingFailed
+        }
+    }
+
+    public func brzDismissPaymentWebview() {
+        BreezeWebView.activeInstance?.dismiss()
     }
 }

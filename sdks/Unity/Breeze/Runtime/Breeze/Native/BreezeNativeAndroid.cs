@@ -10,6 +10,7 @@ public class BreezeNativeAndroid : IBreezeNative
     private AndroidJavaObject androidPluginInstance;
 
     private static BrzPaymentDialogDismissCallback pendingDismissCallback;
+    private static BrzPaymentWebviewDismissCallback pendingWebViewDismissCallback;
 
     public BreezeNativeAndroid()
     {
@@ -82,10 +83,38 @@ public class BreezeNativeAndroid : IBreezeNative
 #endif
     }
 
+    public BrzShowPaymentWebviewResultCode ShowPaymentWebview(
+        BrzShowPaymentWebviewRequest request,
+        BrzPaymentWebviewDismissCallback onDismiss)
+    {
+        EnsureAndroidPluginInitialized();
+        EnsureCallbackReceiverExists();
+
+        pendingWebViewDismissCallback = onDismiss;
+
+        string requestJson = JsonConvert.SerializeObject(request);
+        Debug.Log($"BreezeNativeAndroid: showPaymentWebview request = {requestJson}");
+        int code = androidPluginInstance.Call<int>("showPaymentWebview", requestJson);
+        return (BrzShowPaymentWebviewResultCode)code;
+    }
+
+    public void DismissPaymentWebview()
+    {
+        EnsureAndroidPluginInitialized();
+        androidPluginInstance.Call("dismissPaymentWebview");
+    }
+
     internal static void HandleDialogDismissed(BrzPaymentDialogDismissReason reason, string data)
     {
         var callback = pendingDismissCallback;
         pendingDismissCallback = null;
+        callback?.Invoke(reason, data);
+    }
+
+    internal static void HandleWebViewDismissed(BrzPaymentWebviewDismissReason reason, string data)
+    {
+        var callback = pendingWebViewDismissCallback;
+        pendingWebViewDismissCallback = null;
         callback?.Invoke(reason, data);
     }
 }
@@ -110,7 +139,7 @@ public class BreezeAndroidCallbackReceiver : MonoBehaviour
 
     /// <summary>
     /// Called by Unity's UnitySendMessage from Java BreezeUnityBridge.
-    /// Payload JSON format: {"reason": 0, "data": "..."}
+    /// Payload JSON format: {"reason": "", "data": "..."}
     /// </summary>
     public void OnAndroidDialogDismissed(string jsonPayload)
     {
@@ -131,11 +160,42 @@ public class BreezeAndroidCallbackReceiver : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Called by Unity's UnitySendMessage from Java BreezeUnityBridge.
+    /// Payload JSON format: {"reason": "", "data": "..."}
+    /// </summary>
+    public void OnAndroidWebViewDismissed(string jsonPayload)
+    {
+        Debug.Log($"BreezeAndroidCallbackReceiver: OnAndroidWebViewDismissed: {jsonPayload}");
+        try
+        {
+            var payload = JsonConvert.DeserializeObject<WebViewDismissedPayload>(jsonPayload);
+            var reason = payload?.Reason ?? BrzPaymentWebviewDismissReason.Dismissed;
+            var data = payload?.Data;
+            BreezeNativeAndroid.HandleWebViewDismissed(reason, data);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"BreezeAndroidCallbackReceiver: Failed to parse webview dismiss payload: {e.Message}");
+            BreezeNativeAndroid.HandleWebViewDismissed(BrzPaymentWebviewDismissReason.Dismissed, null);
+        }
+    }
+
     [Serializable]
     private class DialogDismissedPayload
     {
         [JsonProperty("reason")]
-        public int Reason;
+        public BrzPaymentDialogDismissReason Reason;
+
+        [JsonProperty("data")]
+        public string Data;
+    }
+
+    [Serializable]
+    private class WebViewDismissedPayload
+    {
+        [JsonProperty("reason")]
+        public BrzPaymentWebviewDismissReason Reason;
 
         [JsonProperty("data")]
         public string Data;

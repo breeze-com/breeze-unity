@@ -1,6 +1,7 @@
 <ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <ui:Button text="Button" name="test-button"/>
     <ui:Button text="Buy Coins" name="show-dialog-button" style="flex-direction: column;"/>
+    <ui:Button text="Buy Coins (Webview)" name="show-webview-button" style="flex-direction: column;"/>
     <ui:ToggleButtonGroup label="" name="theme-button-group" style="align-items: center; justify-content: space-between; flex-direction: row-reverse; align-self: center;">
         <ui:Button text="Auto" name="theme-auto"/>
         <ui:Button text="Dark" name="theme-dark"/>

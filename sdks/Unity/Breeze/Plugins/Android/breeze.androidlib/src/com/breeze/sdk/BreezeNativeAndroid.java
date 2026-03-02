@@ -24,6 +24,7 @@ public class BreezeNativeAndroid {
 
     private static BreezeNativeAndroid instance = null;
     private BreezePaymentOptionsDialog currentDialog = null;
+    private BreezeWebView currentWebView = null;
 
     public static BreezeNativeAndroid getInstance() {
         if (instance == null) {
@@ -147,6 +148,79 @@ public class BreezeNativeAndroid {
 
     public void dismissPaymentPageView() {
         Log.d(TAG, "dismissPaymentPageView called (no-op on Android)");
+    }
+
+    /**
+     * @param requestJson JSON string of BrzShowPaymentWebviewRequest
+     * @return int value of enum BrzShowPaymentWebviewResultCode
+     */
+    public int showPaymentWebview(String requestJson) {
+        if (requestJson == null || requestJson.isEmpty()) {
+            return 1; // NullInput
+        }
+
+        try {
+            JSONObject json = new JSONObject(requestJson);
+            String directPaymentUrl = json.optString("directPaymentUrl", null);
+            String data = json.optString("data", null);
+
+            if (directPaymentUrl == null || directPaymentUrl.isEmpty()) {
+                Log.w(TAG, "directPaymentUrl is missing");
+                return 4; // InvalidUrl
+            }
+
+            // Validate URL host
+            try {
+                Uri uri = Uri.parse(directPaymentUrl);
+                String host = uri.getHost();
+                if (host == null) {
+                    Log.w(TAG, "directPaymentUrl has no host");
+                    return 4; // InvalidUrl
+                }
+                String lower = host.toLowerCase();
+                boolean allowed = false;
+                for (String suffix : BreezeConstants.ALLOWED_HOSTS) {
+                    if (lower.endsWith(suffix)) {
+                        allowed = true;
+                        break;
+                    }
+                }
+                if (!allowed) {
+                    Log.w(TAG, "directPaymentUrl host not allowed: " + host);
+                    return 4; // InvalidUrl
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "Invalid directPaymentUrl: " + e.getMessage());
+                return 4; // InvalidUrl
+            }
+
+            Activity activity = UnityPlayer.currentActivity;
+            final String fUrl = directPaymentUrl;
+            final String fData = data;
+
+            activity.runOnUiThread(() -> {
+                if (currentWebView != null) {
+                    currentWebView.dismiss();
+                }
+                currentWebView = new BreezeWebView(activity, fUrl, fData, (reason, cbData) -> {
+                    currentWebView = null;
+                    BreezeUnityBridge.sendWebViewDismissed(reason, cbData);
+                });
+                currentWebView.show();
+            });
+
+            return 0; // Success
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to parse webview request JSON: " + e.getMessage());
+            return 3; // JsonDecodingFailed
+        }
+    }
+
+    public void dismissPaymentWebview() {
+        Log.d(TAG, "dismissPaymentWebview called");
+        if (currentWebView != null) {
+            currentWebView.dismiss();
+        }
     }
 
     private void sendDismiss(BreezePaymentDialogDismissReason reason, String data) {

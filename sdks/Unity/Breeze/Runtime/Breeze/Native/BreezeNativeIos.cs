@@ -48,6 +48,22 @@ public class BreezeNativeIos : IBreezeNative
 #endif
         brz_dismiss_payment_page_view();
     }
+
+    [DllImport(LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
+    private static extern BrzShowPaymentWebviewResultCode brz_show_payment_webview(
+        string requestJson,
+        BrzPaymentWebviewDismissCallback onDismiss
+    );
+
+    public BrzShowPaymentWebviewResultCode ShowPaymentWebview(
+        BrzShowPaymentWebviewRequest request,
+        BrzPaymentWebviewDismissCallback onDismiss
+    )
+    {
+        string requestJson = JsonConvert.SerializeObject(request);
+        UnityEngine.Debug.Log($"brz_show_payment_webview: request = {requestJson}");
+        return brz_show_payment_webview(requestJson, onDismiss);
+    }
 }
 
 #endif
