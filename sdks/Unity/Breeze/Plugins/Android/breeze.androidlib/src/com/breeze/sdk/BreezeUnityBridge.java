@@ -25,7 +25,7 @@ public class BreezeUnityBridge {
     public static void sendDialogDismissed(BreezePaymentDialogDismissReason reason, String data) {
         try {
             JSONObject payload = new JSONObject();
-            payload.put("reason", reason.getId());
+            payload.put("reason", reason.getValue());
             payload.put("data", data != null ? data : "");
             String jsonPayload = payload.toString();
             sendMessage(MSG_ON_DIALOG_DISMISSED, jsonPayload);
@@ -37,7 +37,7 @@ public class BreezeUnityBridge {
     public static void sendWebViewDismissed(BreezeWebViewDismissReason reason, String data) {
         try {
             JSONObject payload = new JSONObject();
-            payload.put("reason", reason.getId());
+            payload.put("reason", reason.getValue());
             payload.put("data", data != null ? data : "");
             String jsonPayload = payload.toString();
             sendMessage(MSG_ON_WEBVIEW_DISMISSED, jsonPayload);

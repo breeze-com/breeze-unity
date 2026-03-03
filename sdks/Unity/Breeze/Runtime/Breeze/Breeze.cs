@@ -69,8 +69,9 @@ public sealed class Breeze
     [AOT.MonoPInvokeCallback(typeof(BrzPaymentWebviewDismissCallback))]
     public static void NotifyOnPaymentWebviewDismissed(BrzPaymentWebviewDismissReason reason, string data)
     {
+#if BREEZE_DEBUG
         UnityEngine.Debug.Log($"webview dismissed, reason: {reason}, data: {data}");
-
+#endif
         if (_instance != null)
         {
             _instance.OnPaymentWebviewDismissed?.Invoke(reason, data);

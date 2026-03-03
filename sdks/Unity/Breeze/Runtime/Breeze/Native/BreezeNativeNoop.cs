@@ -40,7 +40,9 @@ public class BreezeNativeNoop : IBreezeNative
 
     public void DismissPaymentPageView()
     {
+#if BREEZE_DEBUG
         Debug.Log("BreezeNativeNoop: DismissPaymentPageView (no-op in editor)");
+#endif
     }
 
     public BrzShowPaymentWebviewResultCode ShowPaymentWebview(
@@ -49,7 +51,9 @@ public class BreezeNativeNoop : IBreezeNative
     )
     {
         string requestJson = JsonConvert.SerializeObject(request);
+#if BREEZE_DEBUG
         Debug.Log($"ShowPaymentWebview: Not implemented, request: {requestJson}");
+#endif
         return BrzShowPaymentWebviewResultCode.Success;
     }
 }

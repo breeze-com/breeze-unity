@@ -250,8 +250,6 @@ public class ShowPaymentOptionsDialogUI : MonoBehaviour
                 Decoration = "Save 20%",
                 ProductIconUrl = "https://storage.googleapis.com/beamo-payments-production.appspot.com/logos/breeze_iconv2.png",
             },
-            // DirectPaymentUrl = "https://pay.qa.breeze.cash/page_b5c5e6e99f5824fd/pcs_f85b8778a500135fbe75272628a737693d9c4b1a",
-            // DirectPaymentUrl = "https://link.qa.breeze.cash/link/plink_22f296fdeecb92ff",
             DirectPaymentUrl = result.Data.Url,
             Data = GAME_PRODUCT_ID,
             Theme = theme,

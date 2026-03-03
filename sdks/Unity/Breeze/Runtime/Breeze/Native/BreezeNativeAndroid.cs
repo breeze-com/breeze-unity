@@ -93,7 +93,9 @@ public class BreezeNativeAndroid : IBreezeNative
         pendingWebViewDismissCallback = onDismiss;
 
         string requestJson = JsonConvert.SerializeObject(request);
+#if BREEZE_DEBUG
         Debug.Log($"BreezeNativeAndroid: showPaymentWebview request = {requestJson}");
+#endif
         int code = androidPluginInstance.Call<int>("showPaymentWebview", requestJson);
         return (BrzShowPaymentWebviewResultCode)code;
     }
@@ -155,7 +157,9 @@ public class BreezeAndroidCallbackReceiver : MonoBehaviour
         }
         catch (Exception e)
         {
+#if BREEZE_DEBUG
             Debug.LogError($"BreezeAndroidCallbackReceiver: Failed to parse dismiss payload: {e.Message}");
+#endif
             BreezeNativeAndroid.HandleDialogDismissed(BrzPaymentDialogDismissReason.CloseTapped, null);
         }
     }
@@ -166,7 +170,9 @@ public class BreezeAndroidCallbackReceiver : MonoBehaviour
     /// </summary>
     public void OnAndroidWebViewDismissed(string jsonPayload)
     {
+#if BREEZE_DEBUG
         Debug.Log($"BreezeAndroidCallbackReceiver: OnAndroidWebViewDismissed: {jsonPayload}");
+#endif
         try
         {
             var payload = JsonConvert.DeserializeObject<WebViewDismissedPayload>(jsonPayload);
@@ -176,13 +182,15 @@ public class BreezeAndroidCallbackReceiver : MonoBehaviour
         }
         catch (Exception e)
         {
+#if BREEZE_DEBUG
             Debug.LogError($"BreezeAndroidCallbackReceiver: Failed to parse webview dismiss payload: {e.Message}");
+#endif
             BreezeNativeAndroid.HandleWebViewDismissed(BrzPaymentWebviewDismissReason.Dismissed, null);
         }
     }
 
     [Serializable]
-    private class DialogDismissedPayload
+    public class DialogDismissedPayload
     {
         [JsonProperty("reason")]
         public BrzPaymentDialogDismissReason Reason;
@@ -192,7 +200,7 @@ public class BreezeAndroidCallbackReceiver : MonoBehaviour
     }
 
     [Serializable]
-    private class WebViewDismissedPayload
+    public class WebViewDismissedPayload
     {
         [JsonProperty("reason")]
         public BrzPaymentWebviewDismissReason Reason;

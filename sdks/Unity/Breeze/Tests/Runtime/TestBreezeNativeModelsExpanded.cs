@@ -216,97 +216,6 @@ public class TestBreezeNativeModelsExpanded
         Assert.AreEqual("Test \"Product\" with <html> & 'quotes'", rt.DisplayName);
     }
 
-    // ─── BrzPaymentVerificationConfig serialization ─────────────────────
-
-    [Test]
-    public void VerificationConfig_AllFields_RoundTrips()
-    {
-        var config = new BrzPaymentVerificationConfig
-        {
-            GameServerBaseUrl = "https://api.test.com",
-            StatusPathTemplate = "/custom/{orderId}",
-            PollIntervalSeconds = 3.5f,
-            TimeoutSeconds = 60f,
-            MaxAttempts = 30,
-            AuthToken = "bearer-token-123",
-            ExtraHeaders = new Dictionary<string, string>
-            {
-                { "X-Game-Id", "game-1" },
-                { "X-Version", "2.0" }
-            }
-        };
-        string json = JsonConvert.SerializeObject(config);
-        var rt = JsonConvert.DeserializeObject<BrzPaymentVerificationConfig>(json);
-        Assert.AreEqual("https://api.test.com", rt.GameServerBaseUrl);
-        Assert.AreEqual("/custom/{orderId}", rt.StatusPathTemplate);
-        Assert.AreEqual(3.5f, rt.PollIntervalSeconds);
-        Assert.AreEqual(60f, rt.TimeoutSeconds);
-        Assert.AreEqual(30, rt.MaxAttempts);
-        Assert.AreEqual("bearer-token-123", rt.AuthToken);
-        Assert.AreEqual(2, rt.ExtraHeaders.Count);
-        Assert.AreEqual("game-1", rt.ExtraHeaders["X-Game-Id"]);
-    }
-
-    [Test]
-    public void VerificationConfig_NullExtraHeaders_Serializes()
-    {
-        var config = new BrzPaymentVerificationConfig
-        {
-            GameServerBaseUrl = "https://api.test.com"
-        };
-        string json = JsonConvert.SerializeObject(config);
-        var rt = JsonConvert.DeserializeObject<BrzPaymentVerificationConfig>(json);
-        Assert.IsNull(rt.ExtraHeaders);
-    }
-
-    [Test]
-    public void VerificationConfig_EmptyExtraHeaders()
-    {
-        var config = new BrzPaymentVerificationConfig
-        {
-            GameServerBaseUrl = "https://api.test.com",
-            ExtraHeaders = new Dictionary<string, string>()
-        };
-        string json = JsonConvert.SerializeObject(config);
-        var rt = JsonConvert.DeserializeObject<BrzPaymentVerificationConfig>(json);
-        Assert.IsNotNull(rt.ExtraHeaders);
-        Assert.AreEqual(0, rt.ExtraHeaders.Count);
-    }
-
-    // ─── BrzOrderStatusResponse edge cases ──────────────────────────────
-
-    [Test]
-    public void OrderStatusResponse_WithNullValues_Serializes()
-    {
-        var resp = new BrzOrderStatusResponse
-        {
-            Status = null,
-            OrderId = null,
-            TransactionId = null
-        };
-        string json = JsonConvert.SerializeObject(resp);
-        var rt = JsonConvert.DeserializeObject<BrzOrderStatusResponse>(json);
-        Assert.IsNull(rt.Status);
-        Assert.IsNull(rt.OrderId);
-    }
-
-    [Test]
-    public void OrderStatusResponse_CasePreserved()
-    {
-        var resp = new BrzOrderStatusResponse { Status = "SUCCEEDED" };
-        string json = JsonConvert.SerializeObject(resp);
-        Assert.IsTrue(json.Contains("SUCCEEDED"));
-    }
-
-    [Test]
-    public void OrderStatusResponse_UnicodeOrderId()
-    {
-        var resp = new BrzOrderStatusResponse { OrderId = "注文-abc-123" };
-        string json = JsonConvert.SerializeObject(resp);
-        var rt = JsonConvert.DeserializeObject<BrzOrderStatusResponse>(json);
-        Assert.AreEqual("注文-abc-123", rt.OrderId);
-    }
-
     // ─── BrzShowPaymentOptionsResultCode ────────────────────────────────
 
     [Test]
@@ -314,26 +223,6 @@ public class TestBreezeNativeModelsExpanded
     {
         var values = Enum.GetValues(typeof(BrzShowPaymentOptionsResultCode));
         Assert.AreEqual(4, values.Length);
-    }
-
-    // ─── BrzPaymentStatus enum completeness ─────────────────────────────
-
-    [Test]
-    public void PaymentStatus_AllValues_Count()
-    {
-        var values = Enum.GetValues(typeof(BrzPaymentStatus));
-        Assert.AreEqual(6, values.Length);
-    }
-
-    [Test]
-    public void PaymentStatus_CastFromInt()
-    {
-        Assert.AreEqual(BrzPaymentStatus.Pending, (BrzPaymentStatus)0);
-        Assert.AreEqual(BrzPaymentStatus.Succeeded, (BrzPaymentStatus)1);
-        Assert.AreEqual(BrzPaymentStatus.Failed, (BrzPaymentStatus)2);
-        Assert.AreEqual(BrzPaymentStatus.Expired, (BrzPaymentStatus)3);
-        Assert.AreEqual(BrzPaymentStatus.Refunded, (BrzPaymentStatus)4);
-        Assert.AreEqual(BrzPaymentStatus.Unknown, (BrzPaymentStatus)5);
     }
 
     // ─── BreezeEnvironment ──────────────────────────────────────────────

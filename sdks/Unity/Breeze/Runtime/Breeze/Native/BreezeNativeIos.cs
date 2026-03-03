@@ -61,7 +61,9 @@ public class BreezeNativeIos : IBreezeNative
     )
     {
         string requestJson = JsonConvert.SerializeObject(request);
+#if BREEZE_DEBUG
         UnityEngine.Debug.Log($"brz_show_payment_webview: request = {requestJson}");
+#endif
         return brz_show_payment_webview(requestJson, onDismiss);
     }
 }

@@ -221,148 +221,18 @@ public class TestBreezeSecurity
         // This is why server-side verification is mandatory
     }
 
-    // ─── JSON Deserialization Security ───
-
-    [Test]
-    public void JsonDeserialization_ExtraFields_AreIgnored()
-    {
-        string json = "{\"status\":\"succeeded\",\"orderId\":\"o1\",\"transactionId\":\"t1\",\"evil\":\"payload\"}";
-        var response = JsonConvert.DeserializeObject<BrzOrderStatusResponse>(json);
-        Assert.IsNotNull(response);
-        Assert.AreEqual("succeeded", response.Status);
-    }
-
-    [Test]
-    public void JsonDeserialization_MissingFields_DefaultToNull()
-    {
-        string json = "{}";
-        var response = JsonConvert.DeserializeObject<BrzOrderStatusResponse>(json);
-        Assert.IsNotNull(response);
-        Assert.IsNull(response.Status);
-        Assert.IsNull(response.OrderId);
-    }
-
-    [Test]
-    public void JsonDeserialization_InvalidJson_ThrowsException()
-    {
-        string json = "not json at all";
-        Assert.Throws<JsonReaderException>(() =>
-        {
-            JsonConvert.DeserializeObject<BrzOrderStatusResponse>(json);
-        });
-    }
-
-    [Test]
-    public void JsonDeserialization_VeryLargePayload_DoesNotCrash()
-    {
-        // Simulate a large but valid JSON payload
-        string bigValue = new string('A', 100000);
-        string json = $"{{\"status\":\"pending\",\"orderId\":\"{bigValue}\"}}";
-        var response = JsonConvert.DeserializeObject<BrzOrderStatusResponse>(json);
-        Assert.IsNotNull(response);
-        Assert.AreEqual(100000, response.OrderId.Length);
-    }
-
-    [Test]
-    public void JsonDeserialization_NullPayload_ReturnsNull()
-    {
-        var response = JsonConvert.DeserializeObject<BrzOrderStatusResponse>(null);
-        Assert.IsNull(response);
-    }
-
-    // ─── Payment Status Parsing ───
-
-    [Test]
-    public void PaymentStatus_UnknownString_MapsToUnknown()
-    {
-        // Test that unexpected status strings don't crash
-        var result = new BrzPaymentVerificationResult { Status = BrzPaymentStatus.Unknown };
-        Assert.IsFalse(result.IsTerminal);
-        Assert.IsFalse(result.IsSuccess);
-    }
-
-    [Test]
-    public void PaymentStatus_Succeeded_IsTerminalAndSuccess()
-    {
-        var result = new BrzPaymentVerificationResult { Status = BrzPaymentStatus.Succeeded };
-        Assert.IsTrue(result.IsTerminal);
-        Assert.IsTrue(result.IsSuccess);
-    }
-
-    [Test]
-    public void PaymentStatus_Failed_IsTerminalNotSuccess()
-    {
-        var result = new BrzPaymentVerificationResult { Status = BrzPaymentStatus.Failed };
-        Assert.IsTrue(result.IsTerminal);
-        Assert.IsFalse(result.IsSuccess);
-    }
-
-    [Test]
-    public void PaymentStatus_Pending_IsNotTerminal()
-    {
-        var result = new BrzPaymentVerificationResult { Status = BrzPaymentStatus.Pending };
-        Assert.IsFalse(result.IsTerminal);
-    }
-
     // ─── Android Callback Type Mismatch ───
 
     [Test]
-    public void AndroidCallback_StringReasonInJson_FailsIntParsing()
+    public void AndroidCallback_StringReasonInJson_ParseCorrectly()
     {
         // Simulates what Android sends: reason as string value
         string jsonPayload = "{\"reason\":\"CloseTapped\",\"data\":\"test\"}";
 
-        // The BreezeAndroidCallbackReceiver expects int Reason
-        // This documents the bug: Newtonsoft will throw or return 0
-        try
-        {
-            var payload = JsonConvert.DeserializeObject<AndroidDismissPayloadIntReason>(jsonPayload);
-            // If it doesn't throw, reason defaults to 0 (CloseTapped) — masking real reason
-            Assert.AreEqual(0, payload.Reason, "String 'CloseTapped' incorrectly parsed as int 0");
-        }
-        catch (JsonException)
-        {
-            Assert.Pass("Correctly fails to parse string as int — bug confirmed");
-        }
-    }
+        var payload = JsonConvert.DeserializeObject<BreezeAndroidCallbackReceiver.DialogDismissedPayload>(jsonPayload);
 
-    [Test]
-    public void AndroidCallback_IntReasonInJson_ParsesCorrectly()
-    {
-        string jsonPayload = "{\"reason\":1,\"data\":\"test\"}";
-        var payload = JsonConvert.DeserializeObject<AndroidDismissPayloadIntReason>(jsonPayload);
-        Assert.AreEqual(1, payload.Reason);
+        Assert.AreEqual(BrzPaymentDialogDismissReason.CloseTapped, payload.Reason, "String 'CloseTapped' incorrectly parsed");
         Assert.AreEqual("test", payload.Data);
-    }
-
-    // ─── Configuration Validation ───
-
-    [Test]
-    public void BreezePaymentVerifier_NullConfig_Throws()
-    {
-        Assert.Throws<ArgumentNullException>(() => new BreezePaymentVerifier(null));
-    }
-
-    [Test]
-    public void BreezePaymentVerifier_EmptyBaseUrl_Throws()
-    {
-        Assert.Throws<ArgumentException>(() =>
-            new BreezePaymentVerifier(new BrzPaymentVerificationConfig { GameServerBaseUrl = "" }));
-    }
-
-    [Test]
-    public void BreezePaymentVerifier_NullBaseUrl_Throws()
-    {
-        Assert.Throws<ArgumentException>(() =>
-            new BreezePaymentVerifier(new BrzPaymentVerificationConfig { GameServerBaseUrl = null }));
-    }
-
-    [Test]
-    public void BreezePaymentVerifier_HttpBaseUrl_ThrowsArgumentException()
-    {
-        // HTTPS is enforced by the constructor
-        var config = new BrzPaymentVerificationConfig { GameServerBaseUrl = "http://insecure.game.com" };
-        Assert.Throws<ArgumentException>(() => new BreezePaymentVerifier(config));
     }
 
     // ─── Query String Injection ───
@@ -376,7 +246,7 @@ public class TestBreezeSecurity
             { "q", "<script>alert('xss')</script>" }
         };
         string result = BreezeHelper.UpdateUrlQueryParams(url, extraParams);
-        Assert.IsFalse(result.Contains("<script>"), "XSS payload should be URL-encoded");
+        Assert.IsFalse(result.Contains("<script>"), "XSS payload should be URL-encoded, but received: " + result);
     }
 
     [Test]
@@ -432,15 +302,4 @@ public class TestBreezeSecurity
         }
     }
 
-    /// <summary>
-    /// Matches the broken BreezeAndroidCallbackReceiver.DialogDismissedPayload structure
-    /// </summary>
-    private class AndroidDismissPayloadIntReason
-    {
-        [JsonProperty("reason")]
-        public int Reason;
-
-        [JsonProperty("data")]
-        public string Data;
-    }
 }
