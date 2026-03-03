@@ -1,7 +1,6 @@
 using System;
 using NUnit.Framework;
 using Newtonsoft.Json;
-using static BreezeAndroidCallbackReceiver;
 
 /// <summary>
 /// Tests for Android callback JSON parsing.

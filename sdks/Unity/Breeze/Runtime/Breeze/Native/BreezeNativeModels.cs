@@ -124,3 +124,24 @@ public enum BrzShowPaymentWebviewResultCode : Int32
     JsonDecodingFailed = 3,
     InvalidUrl = 4,
 }
+
+
+[Serializable]
+public class DialogDismissedPayload
+{
+    [JsonProperty("reason")]
+    public BrzPaymentDialogDismissReason Reason;
+
+    [JsonProperty("data")]
+    public string Data;
+}
+
+[Serializable]
+public class WebViewDismissedPayload
+{
+    [JsonProperty("reason")]
+    public BrzPaymentWebviewDismissReason Reason;
+
+    [JsonProperty("data")]
+    public string Data;
+}

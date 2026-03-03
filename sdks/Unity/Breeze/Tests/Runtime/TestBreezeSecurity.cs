@@ -229,7 +229,7 @@ public class TestBreezeSecurity
         // Simulates what Android sends: reason as string value
         string jsonPayload = "{\"reason\":\"CloseTapped\",\"data\":\"test\"}";
 
-        var payload = JsonConvert.DeserializeObject<BreezeAndroidCallbackReceiver.DialogDismissedPayload>(jsonPayload);
+        var payload = JsonConvert.DeserializeObject<DialogDismissedPayload>(jsonPayload);
 
         Assert.AreEqual(BrzPaymentDialogDismissReason.CloseTapped, payload.Reason, "String 'CloseTapped' incorrectly parsed");
         Assert.AreEqual("test", payload.Data);

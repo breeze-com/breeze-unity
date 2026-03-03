@@ -188,26 +188,6 @@ public class BreezeAndroidCallbackReceiver : MonoBehaviour
             BreezeNativeAndroid.HandleWebViewDismissed(BrzPaymentWebviewDismissReason.Dismissed, null);
         }
     }
-
-    [Serializable]
-    public class DialogDismissedPayload
-    {
-        [JsonProperty("reason")]
-        public BrzPaymentDialogDismissReason Reason;
-
-        [JsonProperty("data")]
-        public string Data;
-    }
-
-    [Serializable]
-    public class WebViewDismissedPayload
-    {
-        [JsonProperty("reason")]
-        public BrzPaymentWebviewDismissReason Reason;
-
-        [JsonProperty("data")]
-        public string Data;
-    }
 }
 
 #endif
