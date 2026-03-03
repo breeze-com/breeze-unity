@@ -1,105 +1,80 @@
 using System;
 using NUnit.Framework;
 using Newtonsoft.Json;
+using static BreezeAndroidCallbackReceiver;
 
 /// <summary>
-/// Tests for Android callback JSON parsing — specifically the known bug where
-/// the Android bridge sent dismiss reason as a string ("CloseTapped") but
-/// the C# DialogDismissedPayload expected an int.
-///
-/// The fix: DialogDismissedPayload.Reason uses int, matching the int values
-/// sent by the Java bridge. The StringEnumConverter on BrzPaymentDialogDismissReason
-/// handles string↔enum for the public API; the internal bridge uses int codes.
+/// Tests for Android callback JSON parsing.
+/// DialogDismissedPayload.Reason and WebViewDismissedPayload.Reason are enums
+/// with StringEnumConverter, so they support both int and string deserialization.
 /// </summary>
 public class TestAndroidCallbackParsing
 {
-    // Mirrors the internal DialogDismissedPayload from BreezeNativeAndroid
-    [Serializable]
-    private class DialogDismissedPayload
-    {
-        [JsonProperty("reason")]
-        public int Reason;
-
-        [JsonProperty("data")]
-        public string Data;
-    }
-
-    // ─── Int-based reason (correct protocol) ────────────────────────────
+    // ─── DialogDismissedPayload: Int-based reason ────────────────────────
 
     [Test]
     public void IntReason_CloseTapped_ParsesCorrectly()
     {
         var payload = JsonConvert.DeserializeObject<DialogDismissedPayload>("{\"reason\":0,\"data\":\"d\"}");
-        Assert.AreEqual(0, payload.Reason);
-        Assert.AreEqual(BrzPaymentDialogDismissReason.CloseTapped, (BrzPaymentDialogDismissReason)payload.Reason);
+        Assert.AreEqual(BrzPaymentDialogDismissReason.CloseTapped, payload.Reason);
     }
 
     [Test]
     public void IntReason_DirectPaymentTapped_ParsesCorrectly()
     {
         var payload = JsonConvert.DeserializeObject<DialogDismissedPayload>("{\"reason\":1,\"data\":null}");
-        Assert.AreEqual(BrzPaymentDialogDismissReason.DirectPaymentTapped, (BrzPaymentDialogDismissReason)payload.Reason);
+        Assert.AreEqual(BrzPaymentDialogDismissReason.DirectPaymentTapped, payload.Reason);
     }
 
     [Test]
     public void IntReason_AppStoreTapped_ParsesCorrectly()
     {
         var payload = JsonConvert.DeserializeObject<DialogDismissedPayload>("{\"reason\":2}");
-        Assert.AreEqual(BrzPaymentDialogDismissReason.AppStoreTapped, (BrzPaymentDialogDismissReason)payload.Reason);
+        Assert.AreEqual(BrzPaymentDialogDismissReason.AppStoreTapped, payload.Reason);
     }
 
     [Test]
     public void IntReason_GoogleStoreTapped_ParsesCorrectly()
     {
         var payload = JsonConvert.DeserializeObject<DialogDismissedPayload>("{\"reason\":3}");
-        Assert.AreEqual(BrzPaymentDialogDismissReason.GoogleStoreTapped, (BrzPaymentDialogDismissReason)payload.Reason);
+        Assert.AreEqual(BrzPaymentDialogDismissReason.GoogleStoreTapped, payload.Reason);
     }
 
-    // ─── String-based reason (the bug scenario) ─────────────────────────
+    // ─── DialogDismissedPayload: String-based reason ─────────────────────
 
     [Test]
-    public void StringReason_FailsOrDefaultsToZero()
+    public void StringReason_CloseTapped_ParsesCorrectly()
     {
-        // Android bridge previously sent "CloseTapped" as string.
-        // With int field, Newtonsoft either throws or returns 0.
-        string json = "{\"reason\":\"CloseTapped\",\"data\":\"test\"}";
-        try
-        {
-            var payload = JsonConvert.DeserializeObject<DialogDismissedPayload>(json);
-            // If it doesn't throw, reason defaults to 0 — masking DirectPaymentTapped etc.
-            Assert.AreEqual(0, payload.Reason, "String reason silently becomes 0");
-        }
-        catch (JsonException)
-        {
-            // This is the correct behavior — string can't be parsed as int
-            Assert.Pass("Correctly rejects string reason for int field");
-        }
+        var payload = JsonConvert.DeserializeObject<DialogDismissedPayload>("{\"reason\":\"CloseTapped\",\"data\":\"test\"}");
+        Assert.AreEqual(BrzPaymentDialogDismissReason.CloseTapped, payload.Reason);
     }
 
     [Test]
-    public void StringReason_DirectPaymentTapped_WouldBeMisinterpreted()
+    public void StringReason_DirectPaymentTapped_ParsesCorrectly()
     {
-        // If Android sent "DirectPaymentTapped" but C# expects int,
-        // the reason would be wrong (0 instead of 1)
-        string json = "{\"reason\":\"DirectPaymentTapped\",\"data\":\"url\"}";
-        try
-        {
-            var payload = JsonConvert.DeserializeObject<DialogDismissedPayload>(json);
-            // Bug: reason=0 (CloseTapped) instead of 1 (DirectPaymentTapped)
-            Assert.AreNotEqual(1, payload.Reason, "String 'DirectPaymentTapped' does NOT parse to int 1");
-        }
-        catch (JsonException)
-        {
-            Assert.Pass("Correctly rejects string reason");
-        }
+        var payload = JsonConvert.DeserializeObject<DialogDismissedPayload>("{\"reason\":\"DirectPaymentTapped\",\"data\":\"url\"}");
+        Assert.AreEqual(BrzPaymentDialogDismissReason.DirectPaymentTapped, payload.Reason);
     }
 
-    // ─── Enum-based deserialization (what the public API uses) ──────────
+    [Test]
+    public void StringReason_AppStoreTapped_ParsesCorrectly()
+    {
+        var payload = JsonConvert.DeserializeObject<DialogDismissedPayload>("{\"reason\":\"AppStoreTapped\"}");
+        Assert.AreEqual(BrzPaymentDialogDismissReason.AppStoreTapped, payload.Reason);
+    }
+
+    [Test]
+    public void StringReason_GoogleStoreTapped_ParsesCorrectly()
+    {
+        var payload = JsonConvert.DeserializeObject<DialogDismissedPayload>("{\"reason\":\"GoogleStoreTapped\"}");
+        Assert.AreEqual(BrzPaymentDialogDismissReason.GoogleStoreTapped, payload.Reason);
+    }
+
+    // ─── DialogDismissedPayload: Enum deserialization (standalone) ───────
 
     [Test]
     public void EnumReason_StringDeserialization_Works()
     {
-        // BrzPaymentDialogDismissReason uses StringEnumConverter
         Assert.AreEqual(BrzPaymentDialogDismissReason.CloseTapped,
             JsonConvert.DeserializeObject<BrzPaymentDialogDismissReason>("\"CloseTapped\""));
         Assert.AreEqual(BrzPaymentDialogDismissReason.DirectPaymentTapped,
@@ -109,39 +84,114 @@ public class TestAndroidCallbackParsing
     [Test]
     public void EnumReason_IntDeserialization_Works()
     {
-        // StringEnumConverter also handles int values
         Assert.AreEqual(BrzPaymentDialogDismissReason.CloseTapped,
             JsonConvert.DeserializeObject<BrzPaymentDialogDismissReason>("0"));
         Assert.AreEqual(BrzPaymentDialogDismissReason.DirectPaymentTapped,
             JsonConvert.DeserializeObject<BrzPaymentDialogDismissReason>("1"));
     }
 
-    // ─── Null/missing reason ────────────────────────────────────────────
+    // ─── DialogDismissedPayload: Null/missing reason ─────────────────────
 
     [Test]
-    public void NullReason_DefaultsToZero()
+    public void NullReason_DefaultsToCloseTapped()
     {
         var payload = JsonConvert.DeserializeObject<DialogDismissedPayload>("{\"data\":\"test\"}");
-        Assert.AreEqual(0, payload.Reason); // int default
+        Assert.AreEqual(BrzPaymentDialogDismissReason.CloseTapped, payload.Reason);
     }
 
     [Test]
-    public void EmptyPayload_DefaultsToZero()
+    public void EmptyPayload_DefaultsToCloseTapped()
     {
         var payload = JsonConvert.DeserializeObject<DialogDismissedPayload>("{}");
-        Assert.AreEqual(0, payload.Reason);
+        Assert.AreEqual(BrzPaymentDialogDismissReason.CloseTapped, payload.Reason);
         Assert.IsNull(payload.Data);
     }
 
-    // ─── Unknown reason values ──────────────────────────────────────────
+    // ─── DialogDismissedPayload: Unknown reason values ───────────────────
 
     [Test]
     public void UnknownIntReason_CastsWithoutError()
     {
         var payload = JsonConvert.DeserializeObject<DialogDismissedPayload>("{\"reason\":99}");
-        Assert.AreEqual(99, payload.Reason);
-        // Casting to enum gives undefined value — doesn't crash
-        var reason = (BrzPaymentDialogDismissReason)payload.Reason;
-        Assert.AreEqual(99, (int)reason);
+        Assert.AreEqual(99, (int)payload.Reason);
+    }
+
+    // ─── WebViewDismissedPayload: Int-based reason ───────────────────────
+
+    [Test]
+    public void WebView_IntReason_Dismissed_ParsesCorrectly()
+    {
+        var payload = JsonConvert.DeserializeObject<WebViewDismissedPayload>("{\"reason\":0,\"data\":\"d\"}");
+        Assert.AreEqual(BrzPaymentWebviewDismissReason.Dismissed, payload.Reason);
+    }
+
+    [Test]
+    public void WebView_IntReason_PaymentSuccess_ParsesCorrectly()
+    {
+        var payload = JsonConvert.DeserializeObject<WebViewDismissedPayload>("{\"reason\":1}");
+        Assert.AreEqual(BrzPaymentWebviewDismissReason.PaymentSuccess, payload.Reason);
+    }
+
+    [Test]
+    public void WebView_IntReason_PaymentFailure_ParsesCorrectly()
+    {
+        var payload = JsonConvert.DeserializeObject<WebViewDismissedPayload>("{\"reason\":2}");
+        Assert.AreEqual(BrzPaymentWebviewDismissReason.PaymentFailure, payload.Reason);
+    }
+
+    [Test]
+    public void WebView_IntReason_LoadError_ParsesCorrectly()
+    {
+        var payload = JsonConvert.DeserializeObject<WebViewDismissedPayload>("{\"reason\":3}");
+        Assert.AreEqual(BrzPaymentWebviewDismissReason.LoadError, payload.Reason);
+    }
+
+    // ─── WebViewDismissedPayload: String-based reason ────────────────────
+
+    [Test]
+    public void WebView_StringReason_Dismissed_ParsesCorrectly()
+    {
+        var payload = JsonConvert.DeserializeObject<WebViewDismissedPayload>("{\"reason\":\"Dismissed\"}");
+        Assert.AreEqual(BrzPaymentWebviewDismissReason.Dismissed, payload.Reason);
+    }
+
+    [Test]
+    public void WebView_StringReason_PaymentSuccess_ParsesCorrectly()
+    {
+        var payload = JsonConvert.DeserializeObject<WebViewDismissedPayload>("{\"reason\":\"PaymentSuccess\",\"data\":\"receipt\"}");
+        Assert.AreEqual(BrzPaymentWebviewDismissReason.PaymentSuccess, payload.Reason);
+        Assert.AreEqual("receipt", payload.Data);
+    }
+
+    [Test]
+    public void WebView_StringReason_PaymentFailure_ParsesCorrectly()
+    {
+        var payload = JsonConvert.DeserializeObject<WebViewDismissedPayload>("{\"reason\":\"PaymentFailure\",\"data\":\"error_msg\"}");
+        Assert.AreEqual(BrzPaymentWebviewDismissReason.PaymentFailure, payload.Reason);
+        Assert.AreEqual("error_msg", payload.Data);
+    }
+
+    [Test]
+    public void WebView_StringReason_LoadError_ParsesCorrectly()
+    {
+        var payload = JsonConvert.DeserializeObject<WebViewDismissedPayload>("{\"reason\":\"LoadError\"}");
+        Assert.AreEqual(BrzPaymentWebviewDismissReason.LoadError, payload.Reason);
+    }
+
+    // ─── WebViewDismissedPayload: Null/missing/unknown ───────────────────
+
+    [Test]
+    public void WebView_EmptyPayload_DefaultsToDismissed()
+    {
+        var payload = JsonConvert.DeserializeObject<WebViewDismissedPayload>("{}");
+        Assert.AreEqual(BrzPaymentWebviewDismissReason.Dismissed, payload.Reason);
+        Assert.IsNull(payload.Data);
+    }
+
+    [Test]
+    public void WebView_UnknownIntReason_CastsWithoutError()
+    {
+        var payload = JsonConvert.DeserializeObject<WebViewDismissedPayload>("{\"reason\":99}");
+        Assert.AreEqual(99, (int)payload.Reason);
     }
 }
