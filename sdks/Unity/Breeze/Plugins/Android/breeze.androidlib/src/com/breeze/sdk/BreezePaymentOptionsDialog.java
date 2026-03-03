@@ -320,7 +320,7 @@ public class BreezePaymentOptionsDialog {
             FrameLayout.LayoutParams badgeParams = new FrameLayout.LayoutParams(dp(70), dp(24));
             badgeParams.gravity = Gravity.TOP | Gravity.END;
             badgeParams.rightMargin = dp(12);
-            badgeParams.topMargin = dp(-8);
+            badgeParams.topMargin = dp(-4);
             container.addView(badge, badgeParams);
         }
 
