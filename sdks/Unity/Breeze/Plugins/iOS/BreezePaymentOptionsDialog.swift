@@ -420,18 +420,21 @@ class PaymentDialogViewController: UIViewController {
     @objc private func directPaymentTapped() {
         print("Direct Payment tapped")
         dismiss(animated: true) {
-            self.onDismiss?(.directPaymentTapped, self.request.data)
-            // Open URL in Safari View Controller (in-app)
+            // Open URL in Safari View Controller (in-app).
+            // NOTE: Do NOT fire onDismiss here — only fire it once when the Safari view
+            // is dismissed (either by user or programmatically). This prevents the game
+            // from receiving two callbacks for one payment flow.
             if let urlString = self.request.directPaymentUrl, let url = URL(string: urlString) {
-                // UIApplication.shared.open(url, options: [:], completionHandler: nil)
                 let safariView = BreezeSafariView(
                     url: url,
                     onDismiss: {
-                        self.onDismiss?(.closeTapped, self.request.data)
+                        // Single callback when the payment browser is closed
+                        self.onDismiss?(.directPaymentTapped, self.request.data)
                     })
                 safariView.show()
             } else {
                 print("Warning: No directPaymentUrl provided")
+                self.onDismiss?(.closeTapped, self.request.data)
             }
         }
     }

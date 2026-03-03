@@ -14,7 +14,7 @@ public static class BreezeHelper
         UriBuilder builder = new UriBuilder(baseUrl);
         builder.Path = path;
         builder.Query = BuildQueryString(queryParams);
-        return builder.Uri.ToString();
+        return builder.Uri.AbsoluteUri;
     }
 
     public static string UpdateUrlQueryParams(string url, NameValueCollection extraParams, bool appendOnly = false)
@@ -44,7 +44,7 @@ public static class BreezeHelper
 
         builder.Query = BuildQueryString(queryParams);
 
-        return builder.Uri.ToString();
+        return builder.Uri.AbsoluteUri;
     }
 
     public static string BuildQueryString(NameValueCollection queryParams)

@@ -38,7 +38,18 @@ public class BreezeNativeAndroid {
     }
 
     public String getDeviceUniqueId() {
-        return "this-is-a-device-unique-id";
+        try {
+            Activity activity = UnityPlayer.currentActivity;
+            if (activity != null) {
+                return android.provider.Settings.Secure.getString(
+                    activity.getContentResolver(),
+                    android.provider.Settings.Secure.ANDROID_ID
+                );
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Failed to get device ID: " + e.getMessage());
+        }
+        return "";
     }
 
     /**

@@ -69,14 +69,18 @@ public class BreezeNativeAndroid : IBreezeNative
         pendingDismissCallback = onDismiss;
 
         string requestJson = JsonConvert.SerializeObject(request);
+#if BREEZE_DEBUG
         Debug.Log($"brz_show_payment_options_dialog: request = {requestJson}");
+#endif
         int code = androidPluginInstance.Call<int>("showPaymentOptionsDialog", requestJson);
         return (BrzShowPaymentOptionsResultCode)code;
     }
 
     public void DismissPaymentPageView()
     {
+#if BREEZE_DEBUG
         Debug.Log("BreezeNativeAndroid: DismissPaymentPageView called (no-op on Android)");
+#endif
     }
 
     public BrzShowPaymentWebviewResultCode ShowPaymentWebview(
@@ -89,7 +93,9 @@ public class BreezeNativeAndroid : IBreezeNative
         pendingWebViewDismissCallback = onDismiss;
 
         string requestJson = JsonConvert.SerializeObject(request);
+#if BREEZE_DEBUG
         Debug.Log($"BreezeNativeAndroid: showPaymentWebview request = {requestJson}");
+#endif
         int code = androidPluginInstance.Call<int>("showPaymentWebview", requestJson);
         return (BrzShowPaymentWebviewResultCode)code;
     }
@@ -139,7 +145,9 @@ public class BreezeAndroidCallbackReceiver : MonoBehaviour
     /// </summary>
     public void OnAndroidDialogDismissed(string jsonPayload)
     {
+#if BREEZE_DEBUG
         Debug.Log($"BreezeAndroidCallbackReceiver: OnAndroidDialogDismissed: {jsonPayload}");
+#endif
         try
         {
             var payload = JsonConvert.DeserializeObject<DialogDismissedPayload>(jsonPayload);
@@ -149,7 +157,9 @@ public class BreezeAndroidCallbackReceiver : MonoBehaviour
         }
         catch (Exception e)
         {
+#if BREEZE_DEBUG
             Debug.LogError($"BreezeAndroidCallbackReceiver: Failed to parse dismiss payload: {e.Message}");
+#endif
             BreezeNativeAndroid.HandleDialogDismissed(BrzPaymentDialogDismissReason.CloseTapped, null);
         }
     }
@@ -160,7 +170,9 @@ public class BreezeAndroidCallbackReceiver : MonoBehaviour
     /// </summary>
     public void OnAndroidWebViewDismissed(string jsonPayload)
     {
+#if BREEZE_DEBUG
         Debug.Log($"BreezeAndroidCallbackReceiver: OnAndroidWebViewDismissed: {jsonPayload}");
+#endif
         try
         {
             var payload = JsonConvert.DeserializeObject<WebViewDismissedPayload>(jsonPayload);
@@ -170,29 +182,11 @@ public class BreezeAndroidCallbackReceiver : MonoBehaviour
         }
         catch (Exception e)
         {
+#if BREEZE_DEBUG
             Debug.LogError($"BreezeAndroidCallbackReceiver: Failed to parse webview dismiss payload: {e.Message}");
+#endif
             BreezeNativeAndroid.HandleWebViewDismissed(BrzPaymentWebviewDismissReason.Dismissed, null);
         }
-    }
-
-    [Serializable]
-    private class DialogDismissedPayload
-    {
-        [JsonProperty("reason")]
-        public BrzPaymentDialogDismissReason Reason;
-
-        [JsonProperty("data")]
-        public string Data;
-    }
-
-    [Serializable]
-    private class WebViewDismissedPayload
-    {
-        [JsonProperty("reason")]
-        public BrzPaymentWebviewDismissReason Reason;
-
-        [JsonProperty("data")]
-        public string Data;
     }
 }
 

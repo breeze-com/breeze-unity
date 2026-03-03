@@ -32,7 +32,9 @@ public class BreezeNativeIos : IBreezeNative
     )
     {
         string requestJson = JsonConvert.SerializeObject(request);
+#if BREEZE_DEBUG
         UnityEngine.Debug.Log($"brz_show_payment_options_dialog: request = {requestJson}");
+#endif
         return brz_show_payment_options_dialog(requestJson, onDismiss);
     }
 
@@ -41,7 +43,9 @@ public class BreezeNativeIos : IBreezeNative
 
     public void DismissPaymentPageView()
     {
+#if BREEZE_DEBUG
         UnityEngine.Debug.Log($"brz_dismiss_payment_page_view called");
+#endif
         brz_dismiss_payment_page_view();
     }
 
@@ -57,7 +61,9 @@ public class BreezeNativeIos : IBreezeNative
     )
     {
         string requestJson = JsonConvert.SerializeObject(request);
+#if BREEZE_DEBUG
         UnityEngine.Debug.Log($"brz_show_payment_webview: request = {requestJson}");
+#endif
         return brz_show_payment_webview(requestJson, onDismiss);
     }
 }
