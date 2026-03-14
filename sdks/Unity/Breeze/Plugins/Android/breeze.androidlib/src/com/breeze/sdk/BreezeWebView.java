@@ -18,6 +18,7 @@ import android.view.animation.DecelerateInterpolator;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -27,6 +28,14 @@ import android.widget.LinearLayout;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Map;
 
 /**
  * Bottom-sheet style webview dialog with draggable resize handle, rounded corners,
@@ -193,6 +202,18 @@ public class BreezeWebView {
         settings.setAllowFileAccess(false);
         settings.setAllowContentAccess(false);
 
+        settings.setLoadWithOverviewMode(true);                     // fit content to screen width
+        settings.setUseWideViewPort(true);                          // proper viewport for iframes
+        settings.setSupportMultipleWindows(false);                  // prevent iframe popup issues
+        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE); // allow mixed content in iframes
+        settings.setLoadWithOverviewMode(true);
+        settings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.TEXT_AUTOSIZING);
+
+        // Enable third-party cookies for cross-origin payment iframes
+        android.webkit.CookieManager cookieManager = android.webkit.CookieManager.getInstance();
+        cookieManager.setAcceptCookie(true);
+        cookieManager.setAcceptThirdPartyCookies(webView, true);
+
         webView.setWebViewClient(new BreezeWebViewClient());
         webView.addJavascriptInterface(new BreezeJsInterface(), BreezeConstants.JS_INTERFACE_NAME);
 
@@ -291,6 +312,64 @@ public class BreezeWebView {
     // ---- WebViewClient ----
 
     private class BreezeWebViewClient extends WebViewClient {
+
+        /**
+         * Intercept iframe requests from the payment provider and inject a CSS fix
+         * for a WebView rendering bug where {@code background: transparent} (alpha 0)
+         * on input elements causes the font to render at an incorrect (tiny) size.
+         * Setting alpha to 0.01 is visually identical but avoids the bug.
+         */
+        @Override
+        public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+            String url = request.getUrl().toString();
+            String urlPath = url.contains("?") ? url.substring(0, url.indexOf("?")) : url;
+
+            if (urlPath.startsWith("https://js.basistheory.com/")
+                    && urlPath.contains("/hosted-elements/")
+                    && urlPath.endsWith(".html")) {
+                try {
+                    HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
+                    conn.setRequestMethod("GET");
+                    Map<String, String> headers = request.getRequestHeaders();
+                    if (headers != null) {
+                        for (Map.Entry<String, String> entry : headers.entrySet()) {
+                            conn.setRequestProperty(entry.getKey(), entry.getValue());
+                        }
+                    }
+
+                    InputStream is = conn.getInputStream();
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(is, "utf-8"));
+                    StringBuilder sb = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        sb.append(line).append("\n");
+                    }
+                    reader.close();
+
+                    String html = sb.toString();
+
+                    // Fix: override fully-transparent backgrounds with near-transparent (alpha 0.01)
+                    // to work around Android WebView font rendering bug.
+                    String cssFix = "<style>input,textarea,select,div[contenteditable]"
+                            + "{background-color:rgba(255,255,255,0.01)!important}</style>";
+
+                    if (html.contains("</head>")) {
+                        html = html.replace("</head>", cssFix + "</head>");
+                    } else {
+                        html = cssFix + html;
+                    }
+
+                    ByteArrayInputStream modifiedStream =
+                            new ByteArrayInputStream(html.getBytes("utf-8"));
+                    return new WebResourceResponse("text/html", "utf-8", modifiedStream);
+                } catch (Exception e) {
+                    Log.w(TAG, "BreezeWebView: failed to intercept iframe for CSS fix: "
+                            + e.getMessage());
+                }
+            }
+
+            return super.shouldInterceptRequest(view, request);
+        }
 
         @Override
         public void onPageFinished(WebView view, String url) {
