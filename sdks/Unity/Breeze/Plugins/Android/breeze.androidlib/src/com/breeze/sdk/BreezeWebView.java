@@ -2,7 +2,6 @@ package com.breeze.sdk;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
-import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
@@ -24,8 +23,6 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -99,6 +96,30 @@ public class BreezeWebView {
         float density = activity.getResources().getDisplayMetrics().density;
         containerHeight = (int) (screenHeight * DEFAULT_HEIGHT_RATIO);
         int handleBarHeightPx = (int) (HANDLE_BAR_HEIGHT_DP * density);
+
+        buildBottomSheetLayout(screenHeight, density, handleBarHeightPx);
+        buildWebView(handleBarHeightPx);
+
+        // Add to window
+        ViewGroup decorView = (ViewGroup) activity.getWindow().getDecorView();
+        decorView.addView(rootOverlay);
+
+        // Animate in
+        animatePresentation();
+
+        // Load URL (strip query params from log to avoid leaking tokens)
+        String safeLogUrl = url.contains("?") ? url.substring(0, url.indexOf("?")) + "?..." : url;
+        Log.d(TAG, "BreezeWebView: loading url=" + safeLogUrl);
+        webView.loadUrl(url);
+    }
+
+    /**
+     * Builds the bottom-sheet chrome: full-screen overlay, dim background,
+     * rounded container, draggable handle bar with pill indicator, close button,
+     * and separator.
+     */
+    @SuppressLint("ClickableViewAccessibility")
+    private void buildBottomSheetLayout(int screenHeight, float density, int handleBarHeightPx) {
         int cornerRadiusPx = (int) (CORNER_RADIUS_DP * density);
 
         // Root overlay that covers the full screen
@@ -188,8 +209,15 @@ public class BreezeWebView {
             handleDrag(event, screenHeight);
             return true;
         });
+    }
 
-        // WebView
+    /**
+     * Creates the WebView, configures settings for payment iframes
+     * (JS, DOM storage, viewport, cookies), attaches the client and JS bridge,
+     * and adds it to the container below the handle bar.
+     */
+    @SuppressLint("SetJavaScriptEnabled")
+    private void buildWebView(int handleBarHeightPx) {
         webView = new WebView(activity);
         FrameLayout.LayoutParams webViewParams = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
@@ -201,12 +229,10 @@ public class BreezeWebView {
         settings.setDomStorageEnabled(true);
         settings.setAllowFileAccess(false);
         settings.setAllowContentAccess(false);
-
         settings.setLoadWithOverviewMode(true);                     // fit content to screen width
         settings.setUseWideViewPort(true);                          // proper viewport for iframes
         settings.setSupportMultipleWindows(false);                  // prevent iframe popup issues
-        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE); // allow mixed content in iframes
-        settings.setLoadWithOverviewMode(true);
+        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
         settings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.TEXT_AUTOSIZING);
 
         // Enable third-party cookies for cross-origin payment iframes
@@ -221,17 +247,6 @@ public class BreezeWebView {
 
         // Inject JS bridge before loading
         injectJsBridge();
-
-        // Add to window
-        ViewGroup decorView = (ViewGroup) activity.getWindow().getDecorView();
-        decorView.addView(rootOverlay);
-
-        // Animate in
-        animatePresentation();
-
-        // Load URL
-        Log.i(TAG, "BreezeWebView: loading url=" + url);
-        webView.loadUrl(url);
     }
 
     // ---- JS Bridge ----
@@ -284,29 +299,65 @@ public class BreezeWebView {
 
     /**
      * JavaScript interface exposed to web pages via {@code window._breezeNative}.
+     * <p>
+     * Each method validates the current WebView URL against {@link BreezeConstants#ALLOWED_HOSTS}
+     * before acting, so untrusted origins cannot trigger payment callbacks.
      */
     private class BreezeJsInterface {
 
         @JavascriptInterface
         public void onPaymentSuccess(String jsData) {
-            Log.d(TAG, "JS: onPaymentSuccess");
-            activity.runOnUiThread(() ->
-                    animateDismissal(BreezeWebViewDismissReason.PaymentSuccess, jsData));
+            activity.runOnUiThread(() -> {
+                if (!isAllowedOrigin()) {
+                    Log.w(TAG, "JS: onPaymentSuccess blocked — untrusted origin");
+                    return;
+                }
+                Log.d(TAG, "JS: onPaymentSuccess");
+                animateDismissal(BreezeWebViewDismissReason.PaymentSuccess, jsData);
+            });
         }
 
         @JavascriptInterface
         public void onPaymentFailure(String jsData) {
-            Log.d(TAG, "JS: onPaymentFailure");
-            activity.runOnUiThread(() ->
-                    animateDismissal(BreezeWebViewDismissReason.PaymentFailure, jsData));
+            activity.runOnUiThread(() -> {
+                if (!isAllowedOrigin()) {
+                    Log.w(TAG, "JS: onPaymentFailure blocked — untrusted origin");
+                    return;
+                }
+                Log.d(TAG, "JS: onPaymentFailure");
+                animateDismissal(BreezeWebViewDismissReason.PaymentFailure, jsData);
+            });
         }
 
         @JavascriptInterface
         public void dismiss() {
-            Log.d(TAG, "JS: dismiss");
-            activity.runOnUiThread(() ->
-                    animateDismissal(BreezeWebViewDismissReason.Dismissed));
+            activity.runOnUiThread(() -> {
+                if (!isAllowedOrigin()) {
+                    Log.w(TAG, "JS: dismiss blocked — untrusted origin");
+                    return;
+                }
+                Log.d(TAG, "JS: dismiss");
+                animateDismissal(BreezeWebViewDismissReason.Dismissed);
+            });
         }
+    }
+
+    /**
+     * Returns {@code true} if the WebView's current main-frame URL belongs to an allowed host.
+     * Must be called on the UI thread (reads {@code webView.getUrl()}).
+     */
+    private boolean isAllowedOrigin() {
+        if (webView == null) return false;
+        String currentUrl = webView.getUrl();
+        if (currentUrl == null) return false;
+        Uri uri = Uri.parse(currentUrl);
+        String host = uri.getHost();
+        if (host == null) return false;
+        host = host.toLowerCase();
+        for (String suffix : BreezeConstants.ALLOWED_HOSTS) {
+            if (host.endsWith(suffix)) return true;
+        }
+        return false;
     }
 
     // ---- WebViewClient ----
@@ -327,9 +378,14 @@ public class BreezeWebView {
             if (urlPath.startsWith("https://js.basistheory.com/")
                     && urlPath.contains("/hosted-elements/")
                     && urlPath.endsWith(".html")) {
+                HttpURLConnection conn = null;
+                InputStream is = null;
+                BufferedReader reader = null;
                 try {
-                    HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
+                    conn = (HttpURLConnection) new URL(url).openConnection();
                     conn.setRequestMethod("GET");
+                    conn.setConnectTimeout(10_000);
+                    conn.setReadTimeout(10_000);
                     Map<String, String> headers = request.getRequestHeaders();
                     if (headers != null) {
                         for (Map.Entry<String, String> entry : headers.entrySet()) {
@@ -337,14 +393,13 @@ public class BreezeWebView {
                         }
                     }
 
-                    InputStream is = conn.getInputStream();
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(is, "utf-8"));
+                    is = conn.getInputStream();
+                    reader = new BufferedReader(new InputStreamReader(is, "utf-8"));
                     StringBuilder sb = new StringBuilder();
                     String line;
                     while ((line = reader.readLine()) != null) {
                         sb.append(line).append("\n");
                     }
-                    reader.close();
 
                     String html = sb.toString();
 
@@ -365,6 +420,10 @@ public class BreezeWebView {
                 } catch (Exception e) {
                     Log.w(TAG, "BreezeWebView: failed to intercept iframe for CSS fix: "
                             + e.getMessage());
+                } finally {
+                    try { if (reader != null) reader.close(); } catch (Exception ignored) {}
+                    try { if (is != null) is.close(); } catch (Exception ignored) {}
+                    if (conn != null) conn.disconnect();
                 }
             }
 
