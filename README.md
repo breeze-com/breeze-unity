@@ -9,6 +9,7 @@ The Breeze Payment Unity SDK enables seamless payment integration for Unity game
 
 - 🎮 **Native Integration** — Seamlessly integrated with Unity for iOS and Android
 - 💳 **Payment Options Dialog** — Native bottom-sheet dialog with product info, pricing, and save badges
+- 🌐 **Payment Webview** — Open the payment page directly in an in-app webview, skipping method selection
 - 🎨 **Theming** — Light, dark, and auto (follows system) themes on both platforms
 - 🛠️ **Easy Setup** — Install via Unity Package Manager with one URL
 
@@ -115,7 +116,60 @@ void OnPaymentDialogDismissed(BrzPaymentDialogDismissReason reason, string data)
 }
 ```
 
-### 3. Set Up Deep Links
+### 3. Show Payment Webview (Alternative)
+
+Instead of a payment options dialog, you can open the Breeze payment page directly inside an in-app webview. This skips the payment method selection step and takes the player straight to the payment page.
+
+```csharp
+async Awaitable ShowPaymentWebview()
+{
+    // Create an order on your game server first
+    var result = await gameClient.CreateOrderAsync(new CreateOrderInput
+    {
+        ProductId = "prd_your_product_id",
+        Quantity = 1,
+    });
+
+    var request = new BrzShowPaymentWebviewRequest()
+    {
+        DirectPaymentUrl = result.Data.Url,  // URL from your server
+        Data = "product-id-123",             // Optional: pass-through data returned on dismiss
+    };
+
+    // Subscribe to dismissal event
+    Breeze.Instance.OnPaymentWebviewDismissed += OnPaymentWebviewDismissed;
+
+    // Show the webview
+    Breeze.Instance.ShowPaymentWebview(request);
+}
+
+void OnPaymentWebviewDismissed(BrzPaymentWebviewDismissReason reason, string data)
+{
+    // Unsubscribe first to avoid duplicate handlers
+    Breeze.Instance.OnPaymentWebviewDismissed -= OnPaymentWebviewDismissed;
+
+    switch (reason)
+    {
+        case BrzPaymentWebviewDismissReason.PaymentSuccess:
+            // Payment completed — verify server-side before granting items
+            StartPaymentVerification();
+            break;
+        case BrzPaymentWebviewDismissReason.PaymentFailure:
+            // Payment failed or was cancelled
+            break;
+        case BrzPaymentWebviewDismissReason.Dismissed:
+            // User closed the webview manually
+            break;
+        case BrzPaymentWebviewDismissReason.LoadError:
+            // Webview failed to load the payment page
+            break;
+    }
+}
+```
+
+> **Note:** Unlike `ShowPaymentOptionsDialog`, the webview handles the entire payment flow natively — no deep link handling or `DismissPaymentPageView()` call is needed.
+
+### 4. Set Up Deep Links
 
 Breeze uses deep links to return the player to your app after payment:
 
@@ -160,7 +214,7 @@ void OnPaymentPageResult(string url)
 xcrun simctl openurl booted "mygame://breeze-payment/purchase/success"
 ```
 
-### 4. Verify Payment (Recommended)
+### 5. Verify Payment (Recommended)
 
 ⚠️ **Never grant items based on the deep link URL alone.** Deep links can be spoofed by any app on the device. Always verify the payment status with your game server.
 
@@ -175,7 +229,7 @@ Player taps "Pay" → Breeze browser opens → Player pays
                               Game grants items ✅
 ```
 
-### 5. Recovery on App Restart
+### 6. Recovery on App Restart
 
 If the game is killed during payment, the Breeze webhook still fires and your server knows the order is paid. But the client never polled, so items aren't granted in that session.
 
@@ -258,19 +312,23 @@ Custom URL schemes (`mygame://`) are inherently insecure — any app can registe
 | `Breeze.Initialize(config)` | Initialize the SDK. Must be called once before any other method. |
 | `Breeze.Uninitialize()` | Clean up SDK resources. Call before re-initializing. |
 | `Breeze.Instance` | Singleton instance (null if not initialized). |
-| `Instance.ShowPaymentOptionsDialog(request)` | Show the native payment dialog. |
+| `Instance.ShowPaymentOptionsDialog(request)` | Show the native payment options dialog. |
+| `Instance.ShowPaymentWebview(request)` | Open the payment page directly in an in-app webview. |
 | `Instance.DismissPaymentPageView()` | Dismiss the in-app payment browser (iOS). No-op on Android/Editor. |
 | `Instance.GetDeviceUniqueId()` | Returns a platform-specific device ID. |
 | `Instance.OnPaymentOptionsDialogDismissed` | Event fired when the payment dialog is dismissed. |
+| `Instance.OnPaymentWebviewDismissed` | Event fired when the payment webview is dismissed. |
 
 ### Enums
 
 | Enum | Values |
 |------|--------|
 | `BrzPaymentDialogDismissReason` | `CloseTapped`, `DirectPaymentTapped`, `AppStoreTapped`, `GoogleStoreTapped` |
+| `BrzPaymentWebviewDismissReason` | `Dismissed`, `PaymentSuccess`, `PaymentFailure`, `LoadError` |
 | `BrzPaymentOptionsTheme` | `Auto`, `Light`, `Dark` |
 | `BrzPaymentStatus` | `Pending`, `Succeeded`, `Failed`, `Expired`, `Refunded`, `Unknown` |
 | `BrzShowPaymentOptionsResultCode` | `Success`, `NullInput`, `InvalidUtf8`, `JsonDecodingFailed` |
+| `BrzShowPaymentWebviewResultCode` | `Success`, `NullInput`, `InvalidUtf8`, `JsonDecodingFailed`, `InvalidUrl` |
 
 ## Example Project
 
