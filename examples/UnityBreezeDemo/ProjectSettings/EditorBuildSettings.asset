@@ -6,7 +6,7 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/BreezeDemo/BreezeDemo.unity
+    path: Packages/com.breeze.payment-unity/Samples/BreezeDemo/BreezeDemo.unity
     guid: b5d892147338d42c487897e5122a6a83
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0

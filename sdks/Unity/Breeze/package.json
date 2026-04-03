@@ -1,12 +1,12 @@
 {
-  "name": "cash.breeze.payment-unity",
+  "name": "com.breeze.payment-unity",
   "version": "1.1.0",
   "displayName": "Breeze Payment SDK",
   "description": "Unity Breeze Payment SDK for iOS and Android.",
   "author": {
     "name": "Breeze",
-    "email": "support@breeze.cash",
-    "url": "https://breeze.cash"
+    "email": "support@breeze.com",
+    "url": "https://breeze.com"
   },
   "keywords": [
     "unity",

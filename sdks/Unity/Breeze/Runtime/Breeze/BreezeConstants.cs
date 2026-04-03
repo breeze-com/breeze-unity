@@ -1,5 +1,9 @@
-
-public static class BreezeConstants
+namespace BreezeSdk.Runtime
 {
-    public const string SDK_VERSION = "1.0.0";
+
+    public static class BreezeConstants
+    {
+        public const string SDK_VERSION = "1.0.0";
+    }
+
 }

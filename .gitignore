@@ -81,3 +81,5 @@ Icon
 
 .gradle
 .vscode
+
+*.tgz

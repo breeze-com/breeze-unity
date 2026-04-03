@@ -1,11 +1,19 @@
 {
   "dependencies": {
-    "cash.breeze.payment-unity": {
+    "com.breeze.payment-unity": {
       "version": "file:../../../sdks/Unity/Breeze",
       "depth": 0,
       "source": "local",
       "dependencies": {
         "com.unity.nuget.newtonsoft-json": "3.2.2"
+      }
+    },
+    "com.unity.asset-store-tools": {
+      "version": "file:com.unity.asset-store-tools",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.unity.nuget.newtonsoft-json": "3.2.1"
       }
     },
     "com.unity.ext.nunit": {

@@ -1,6 +1,6 @@
 {
     "name": "breeze.payment-unity.tests",
-    "rootNamespace": "",
+    "rootNamespace": "BreezeSdk.Runtime.Tests",
     "references": [
         "breeze.payment-unity",
         "UnityEngine.TestRunner",

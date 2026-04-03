@@ -1,0 +1,18 @@
+{
+    "name": "breeze.payment-unity.BreezeDemo.Editor",
+    "rootNamespace": "BreezeSdk.BreezeDemo.Editor",
+    "references": [
+        "breeze.payment-unity.BreezeDemo"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

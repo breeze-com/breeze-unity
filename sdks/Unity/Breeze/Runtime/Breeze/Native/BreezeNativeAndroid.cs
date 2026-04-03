@@ -3,191 +3,192 @@
 using System;
 using Newtonsoft.Json;
 using UnityEngine;
-
-public class BreezeNativeAndroid : IBreezeNative
+namespace BreezeSdk.Runtime
 {
-    private AndroidJavaClass androidPlugin;
-    private AndroidJavaObject androidPluginInstance;
-
-    private static BrzPaymentDialogDismissCallback pendingDismissCallback;
-    private static BrzPaymentWebviewDismissCallback pendingWebViewDismissCallback;
-
-    public BreezeNativeAndroid()
+    public class BreezeNativeAndroid : IBreezeNative
     {
-        this.InitializeAndroidPlugin();
-        EnsureCallbackReceiverExists();
-    }
+        private AndroidJavaClass androidPlugin;
+        private AndroidJavaObject androidPluginInstance;
 
-    private void InitializeAndroidPlugin()
-    {
-        if (androidPlugin == null)
+        private static BrzPaymentDialogDismissCallback pendingDismissCallback;
+        private static BrzPaymentWebviewDismissCallback pendingWebViewDismissCallback;
+
+        public BreezeNativeAndroid()
         {
-            try
+            this.InitializeAndroidPlugin();
+            EnsureCallbackReceiverExists();
+        }
+
+        private void InitializeAndroidPlugin()
+        {
+            if (androidPlugin == null)
             {
-                androidPlugin = new AndroidJavaClass("com.breeze.sdk.BreezeNativeAndroid");
-                androidPluginInstance = androidPlugin.CallStatic<AndroidJavaObject>("getInstance");
+                try
+                {
+                    androidPlugin = new AndroidJavaClass("com.breeze.sdk.BreezeNativeAndroid");
+                    androidPluginInstance = androidPlugin.CallStatic<AndroidJavaObject>("getInstance");
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"BreezeNativeAndroid: Failed to initialize Android plugin: {e.Message}");
+                }
             }
-            catch (Exception e)
+        }
+
+        private void EnsureAndroidPluginInitialized()
+        {
+            if (androidPluginInstance == null)
             {
-                Debug.LogError($"BreezeNativeAndroid: Failed to initialize Android plugin: {e.Message}");
+                throw new Exception($"BreezeNativeAndroid: Android plugin should be initialized.");
             }
         }
-    }
 
-    private void EnsureAndroidPluginInitialized()
-    {
-        if (androidPluginInstance == null)
+        private static void EnsureCallbackReceiverExists()
         {
-            throw new Exception($"BreezeNativeAndroid: Android plugin should be initialized.");
+            if (BreezeAndroidCallbackReceiver.Instance == null)
+            {
+                var go = new GameObject("BreezePay");
+                go.AddComponent<BreezeAndroidCallbackReceiver>();
+                UnityEngine.Object.DontDestroyOnLoad(go);
+            }
         }
-    }
 
-    private static void EnsureCallbackReceiverExists()
-    {
-        if (BreezeAndroidCallbackReceiver.Instance == null)
+        public string GetDeviceUniqueId()
         {
-            var go = new GameObject("BreezePay");
-            go.AddComponent<BreezeAndroidCallbackReceiver>();
-            UnityEngine.Object.DontDestroyOnLoad(go);
+            EnsureAndroidPluginInitialized();
+            string id = androidPluginInstance.Call<string>("getDeviceUniqueId");
+            return id;
         }
-    }
 
-    public string GetDeviceUniqueId()
-    {
-        EnsureAndroidPluginInitialized();
-        string id = androidPluginInstance.Call<string>("getDeviceUniqueId");
-        return id;
-    }
+        public BrzShowPaymentOptionsResultCode ShowPaymentOptionsDialog(
+            BrzShowPaymentOptionsDialogRequest request,
+            BrzPaymentDialogDismissCallback onDismiss)
+        {
+            EnsureAndroidPluginInitialized();
+            EnsureCallbackReceiverExists();
 
-    public BrzShowPaymentOptionsResultCode ShowPaymentOptionsDialog(
-        BrzShowPaymentOptionsDialogRequest request,
-        BrzPaymentDialogDismissCallback onDismiss)
-    {
-        EnsureAndroidPluginInitialized();
-        EnsureCallbackReceiverExists();
+            pendingDismissCallback = onDismiss;
 
-        pendingDismissCallback = onDismiss;
-
-        string requestJson = JsonConvert.SerializeObject(request);
+            string requestJson = JsonConvert.SerializeObject(request);
 #if BREEZE_DEBUG
         Debug.Log($"brz_show_payment_options_dialog: request = {requestJson}");
 #endif
-        int code = androidPluginInstance.Call<int>("showPaymentOptionsDialog", requestJson);
-        return (BrzShowPaymentOptionsResultCode)code;
-    }
+            int code = androidPluginInstance.Call<int>("showPaymentOptionsDialog", requestJson);
+            return (BrzShowPaymentOptionsResultCode)code;
+        }
 
-    public void DismissPaymentPageView()
-    {
+        public void DismissPaymentPageView()
+        {
 #if BREEZE_DEBUG
         Debug.Log("BreezeNativeAndroid: DismissPaymentPageView called (no-op on Android)");
 #endif
-    }
+        }
 
-    public BrzShowPaymentWebviewResultCode ShowPaymentWebview(
-        BrzShowPaymentWebviewRequest request,
-        BrzPaymentWebviewDismissCallback onDismiss)
-    {
-        EnsureAndroidPluginInitialized();
-        EnsureCallbackReceiverExists();
+        public BrzShowPaymentWebviewResultCode ShowPaymentWebview(
+            BrzShowPaymentWebviewRequest request,
+            BrzPaymentWebviewDismissCallback onDismiss)
+        {
+            EnsureAndroidPluginInitialized();
+            EnsureCallbackReceiverExists();
 
-        pendingWebViewDismissCallback = onDismiss;
+            pendingWebViewDismissCallback = onDismiss;
 
-        string requestJson = JsonConvert.SerializeObject(request);
+            string requestJson = JsonConvert.SerializeObject(request);
 #if BREEZE_DEBUG
         Debug.Log($"BreezeNativeAndroid: showPaymentWebview request = {requestJson}");
 #endif
-        int code = androidPluginInstance.Call<int>("showPaymentWebview", requestJson);
-        return (BrzShowPaymentWebviewResultCode)code;
-    }
-
-    public void DismissPaymentWebview()
-    {
-        EnsureAndroidPluginInitialized();
-        androidPluginInstance.Call("dismissPaymentWebview");
-    }
-
-    internal static void HandleDialogDismissed(BrzPaymentDialogDismissReason reason, string data)
-    {
-        var callback = pendingDismissCallback;
-        pendingDismissCallback = null;
-        callback?.Invoke(reason, data);
-    }
-
-    internal static void HandleWebViewDismissed(BrzPaymentWebviewDismissReason reason, string data)
-    {
-        var callback = pendingWebViewDismissCallback;
-        pendingWebViewDismissCallback = null;
-        callback?.Invoke(reason, data);
-    }
-}
-
-/// <summary>
-/// MonoBehaviour that receives UnitySendMessage callbacks from Java.
-/// Must live on a GameObject named "BreezePay" (matching BreezeUnityBridge.UNITY_GAME_OBJECT).
-/// </summary>
-public class BreezeAndroidCallbackReceiver : MonoBehaviour
-{
-    public static BreezeAndroidCallbackReceiver Instance { get; private set; }
-
-    void Awake()
-    {
-        if (Instance != null && Instance != this)
-        {
-            Destroy(gameObject);
-            return;
+            int code = androidPluginInstance.Call<int>("showPaymentWebview", requestJson);
+            return (BrzShowPaymentWebviewResultCode)code;
         }
-        Instance = this;
+
+        public void DismissPaymentWebview()
+        {
+            EnsureAndroidPluginInitialized();
+            androidPluginInstance.Call("dismissPaymentWebview");
+        }
+
+        internal static void HandleDialogDismissed(BrzPaymentDialogDismissReason reason, string data)
+        {
+            var callback = pendingDismissCallback;
+            pendingDismissCallback = null;
+            callback?.Invoke(reason, data);
+        }
+
+        internal static void HandleWebViewDismissed(BrzPaymentWebviewDismissReason reason, string data)
+        {
+            var callback = pendingWebViewDismissCallback;
+            pendingWebViewDismissCallback = null;
+            callback?.Invoke(reason, data);
+        }
     }
 
     /// <summary>
-    /// Called by Unity's UnitySendMessage from Java BreezeUnityBridge.
-    /// Payload JSON format: {"reason": "", "data": "..."}
+    /// MonoBehaviour that receives UnitySendMessage callbacks from Java.
+    /// Must live on a GameObject named "BreezePay" (matching BreezeUnityBridge.UNITY_GAME_OBJECT).
     /// </summary>
-    public void OnAndroidDialogDismissed(string jsonPayload)
+    public class BreezeAndroidCallbackReceiver : MonoBehaviour
     {
+        public static BreezeAndroidCallbackReceiver Instance { get; private set; }
+
+        void Awake()
+        {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            Instance = this;
+        }
+
+        /// <summary>
+        /// Called by Unity's UnitySendMessage from Java BreezeUnityBridge.
+        /// Payload JSON format: {"reason": "", "data": "..."}
+        /// </summary>
+        public void OnAndroidDialogDismissed(string jsonPayload)
+        {
 #if BREEZE_DEBUG
         Debug.Log($"BreezeAndroidCallbackReceiver: OnAndroidDialogDismissed: {jsonPayload}");
 #endif
-        try
-        {
-            var payload = JsonConvert.DeserializeObject<DialogDismissedPayload>(jsonPayload);
-            var reason = (BrzPaymentDialogDismissReason)(payload?.Reason ?? 0);
-            var data = payload?.Data;
-            BreezeNativeAndroid.HandleDialogDismissed(reason, data);
-        }
-        catch (Exception e)
-        {
+            try
+            {
+                var payload = JsonConvert.DeserializeObject<DialogDismissedPayload>(jsonPayload);
+                var reason = (BrzPaymentDialogDismissReason)(payload?.Reason ?? 0);
+                var data = payload?.Data;
+                BreezeNativeAndroid.HandleDialogDismissed(reason, data);
+            }
+            catch (Exception e)
+            {
 #if BREEZE_DEBUG
             Debug.LogError($"BreezeAndroidCallbackReceiver: Failed to parse dismiss payload: {e.Message}");
 #endif
-            BreezeNativeAndroid.HandleDialogDismissed(BrzPaymentDialogDismissReason.CloseTapped, null);
+                BreezeNativeAndroid.HandleDialogDismissed(BrzPaymentDialogDismissReason.CloseTapped, null);
+            }
         }
-    }
 
-    /// <summary>
-    /// Called by Unity's UnitySendMessage from Java BreezeUnityBridge.
-    /// Payload JSON format: {"reason": "", "data": "..."}
-    /// </summary>
-    public void OnAndroidWebViewDismissed(string jsonPayload)
-    {
+        /// <summary>
+        /// Called by Unity's UnitySendMessage from Java BreezeUnityBridge.
+        /// Payload JSON format: {"reason": "", "data": "..."}
+        /// </summary>
+        public void OnAndroidWebViewDismissed(string jsonPayload)
+        {
 #if BREEZE_DEBUG
         Debug.Log($"BreezeAndroidCallbackReceiver: OnAndroidWebViewDismissed: {jsonPayload}");
 #endif
-        try
-        {
-            var payload = JsonConvert.DeserializeObject<WebViewDismissedPayload>(jsonPayload);
-            var reason = payload?.Reason ?? BrzPaymentWebviewDismissReason.Dismissed;
-            var data = payload?.Data;
-            BreezeNativeAndroid.HandleWebViewDismissed(reason, data);
-        }
-        catch (Exception e)
-        {
+            try
+            {
+                var payload = JsonConvert.DeserializeObject<WebViewDismissedPayload>(jsonPayload);
+                var reason = payload?.Reason ?? BrzPaymentWebviewDismissReason.Dismissed;
+                var data = payload?.Data;
+                BreezeNativeAndroid.HandleWebViewDismissed(reason, data);
+            }
+            catch (Exception e)
+            {
 #if BREEZE_DEBUG
             Debug.LogError($"BreezeAndroidCallbackReceiver: Failed to parse webview dismiss payload: {e.Message}");
 #endif
-            BreezeNativeAndroid.HandleWebViewDismissed(BrzPaymentWebviewDismissReason.Dismissed, null);
+                BreezeNativeAndroid.HandleWebViewDismissed(BrzPaymentWebviewDismissReason.Dismissed, null);
+            }
         }
     }
 }
-
 #endif

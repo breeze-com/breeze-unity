@@ -1,6 +1,6 @@
 # Breeze Payment SDK — API Reference
 
-**Package:** `cash.breeze.payment-unity`  
+**Package:** `com.breeze.payment-unity`  
 **Namespace:** global (no namespace — all types are in the global namespace)  
 **Platforms:** iOS 15.0+, Android API 21+  
 
