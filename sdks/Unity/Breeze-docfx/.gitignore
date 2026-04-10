@@ -1,0 +1,5 @@
+/_site
+/api
+bin
+obj
+!/docfx-project/*.csproj

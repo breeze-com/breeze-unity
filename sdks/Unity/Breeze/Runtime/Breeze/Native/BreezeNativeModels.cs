@@ -223,22 +223,40 @@ namespace BreezeSdk.Runtime
     }
 
 
+    /// <summary>
+    /// JSON payload received from the native layer when the payment options dialog is dismissed.
+    /// </summary>
     [Serializable]
     public class DialogDismissedPayload
     {
+        /// <summary>
+        /// The reason the payment options dialog was dismissed.
+        /// </summary>
         [JsonProperty("reason")]
         public BrzPaymentDialogDismissReason Reason;
 
+        /// <summary>
+        /// Optional data passed back from the dialog.
+        /// </summary>
         [JsonProperty("data")]
         public string Data;
     }
 
+    /// <summary>
+    /// JSON payload received from the native layer when the payment web view is dismissed.
+    /// </summary>
     [Serializable]
     public class WebViewDismissedPayload
     {
+        /// <summary>
+        /// The reason the payment web view was dismissed.
+        /// </summary>
         [JsonProperty("reason")]
         public BrzPaymentWebviewDismissReason Reason;
 
+        /// <summary>
+        /// Optional data passed back from the web view.
+        /// </summary>
         [JsonProperty("data")]
         public string Data;
     }

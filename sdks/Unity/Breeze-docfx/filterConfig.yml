@@ -1,0 +1,6 @@
+apiRules:
+  - exclude:
+      uidRegex: ^UnitySourceGeneratedAssemblyMonoScriptTypes
+  - exclude:
+      hasAttribute:
+        uid: System.Runtime.CompilerServices.CompilerGeneratedAttribute

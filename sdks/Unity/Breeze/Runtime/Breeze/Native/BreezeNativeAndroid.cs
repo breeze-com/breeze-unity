@@ -5,6 +5,9 @@ using Newtonsoft.Json;
 using UnityEngine;
 namespace BreezeSdk.Runtime
 {
+    /// <summary>
+    /// Android native implementation of <see cref="IBreezeNative"/>.
+    /// </summary>
     public class BreezeNativeAndroid : IBreezeNative
     {
         private AndroidJavaClass androidPlugin;
@@ -13,6 +16,9 @@ namespace BreezeSdk.Runtime
         private static BrzPaymentDialogDismissCallback pendingDismissCallback;
         private static BrzPaymentWebviewDismissCallback pendingWebViewDismissCallback;
 
+        /// <summary>
+        /// Initializes the Android native plugin and ensures the callback receiver exists.
+        /// </summary>
         public BreezeNativeAndroid()
         {
             this.InitializeAndroidPlugin();
@@ -53,6 +59,7 @@ namespace BreezeSdk.Runtime
             }
         }
 
+        /// <inheritdoc />
         public string GetDeviceUniqueId()
         {
             EnsureAndroidPluginInitialized();
@@ -60,6 +67,7 @@ namespace BreezeSdk.Runtime
             return id;
         }
 
+        /// <inheritdoc />
         public BrzShowPaymentOptionsResultCode ShowPaymentOptionsDialog(
             BrzShowPaymentOptionsDialogRequest request,
             BrzPaymentDialogDismissCallback onDismiss)
@@ -77,6 +85,7 @@ namespace BreezeSdk.Runtime
             return (BrzShowPaymentOptionsResultCode)code;
         }
 
+        /// <inheritdoc />
         public void DismissPaymentPageView()
         {
 #if BREEZE_DEBUG
@@ -84,6 +93,7 @@ namespace BreezeSdk.Runtime
 #endif
         }
 
+        /// <inheritdoc />
         public BrzShowPaymentWebviewResultCode ShowPaymentWebview(
             BrzShowPaymentWebviewRequest request,
             BrzPaymentWebviewDismissCallback onDismiss)
@@ -101,6 +111,9 @@ namespace BreezeSdk.Runtime
             return (BrzShowPaymentWebviewResultCode)code;
         }
 
+        /// <summary>
+        /// Dismisses the currently displayed payment web view.
+        /// </summary>
         public void DismissPaymentWebview()
         {
             EnsureAndroidPluginInitialized();
@@ -128,6 +141,9 @@ namespace BreezeSdk.Runtime
     /// </summary>
     public class BreezeAndroidCallbackReceiver : MonoBehaviour
     {
+        /// <summary>
+        /// Singleton instance of the callback receiver.
+        /// </summary>
         public static BreezeAndroidCallbackReceiver Instance { get; private set; }
 
         void Awake()

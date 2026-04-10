@@ -7,6 +7,9 @@ using Newtonsoft.Json;
 
 namespace BreezeSdk.Runtime
 {
+    /// <summary>
+    /// iOS native implementation of <see cref="IBreezeNative"/>.
+    /// </summary>
     public class BreezeNativeIos : IBreezeNative
     {
         private const string LIB_NAME = "__Internal";
@@ -14,6 +17,7 @@ namespace BreezeSdk.Runtime
         [DllImport(LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
         private static extern UInt32 brz_get_device_id([Out] byte[] buffer, UInt32 bufferLength);
 
+        /// <inheritdoc />
         public string GetDeviceUniqueId()
         {
             UInt32 requiredLength = brz_get_device_id(null, 0);
@@ -28,6 +32,7 @@ namespace BreezeSdk.Runtime
             BrzPaymentDialogDismissCallback onDismiss
         );
 
+        /// <inheritdoc />
         public BrzShowPaymentOptionsResultCode ShowPaymentOptionsDialog(
             BrzShowPaymentOptionsDialogRequest request,
             BrzPaymentDialogDismissCallback onDismiss
@@ -43,6 +48,7 @@ namespace BreezeSdk.Runtime
         [DllImport(LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
         private static extern void brz_dismiss_payment_page_view();
 
+        /// <inheritdoc />
         public void DismissPaymentPageView()
         {
     #if BREEZE_DEBUG
@@ -57,6 +63,7 @@ namespace BreezeSdk.Runtime
             BrzPaymentWebviewDismissCallback onDismiss
         );
 
+        /// <inheritdoc />
         public BrzShowPaymentWebviewResultCode ShowPaymentWebview(
             BrzShowPaymentWebviewRequest request,
             BrzPaymentWebviewDismissCallback onDismiss

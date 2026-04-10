@@ -4,10 +4,14 @@ using UnityEngine;
 
 namespace BreezeSdk.Runtime
 {
+    /// <summary>
+    /// No-op implementation of <see cref="IBreezeNative"/> used in the Unity Editor and unsupported platforms.
+    /// </summary>
     public class BreezeNativeNoop : IBreezeNative
     {
         private const string DEVICE_UNIQUE_ID_KEY = "BreezeDeviceUniqueId";
 
+        /// <inheritdoc />
         public string GetDeviceUniqueId()
         {
             // Check if UUID already exists in PlayerPrefs
@@ -28,6 +32,7 @@ namespace BreezeSdk.Runtime
             return newId;
         }
 
+        /// <inheritdoc />
         public BrzShowPaymentOptionsResultCode ShowPaymentOptionsDialog(
             BrzShowPaymentOptionsDialogRequest request,
             BrzPaymentDialogDismissCallback onDismiss
@@ -40,6 +45,7 @@ namespace BreezeSdk.Runtime
             return BrzShowPaymentOptionsResultCode.Success;
         }
 
+        /// <inheritdoc />
         public void DismissPaymentPageView()
         {
 #if BREEZE_DEBUG
@@ -47,6 +53,7 @@ namespace BreezeSdk.Runtime
 #endif
         }
 
+        /// <inheritdoc />
         public BrzShowPaymentWebviewResultCode ShowPaymentWebview(
             BrzShowPaymentWebviewRequest request,
             BrzPaymentWebviewDismissCallback onDismiss

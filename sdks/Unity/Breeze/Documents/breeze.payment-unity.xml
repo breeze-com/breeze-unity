@@ -1,0 +1,541 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>breeze.payment-unity</name>
+    </assembly>
+    <members>
+        <member name="T:BreezeSdk.Runtime.Breeze">
+            <summary>
+            Main entry point for the Breeze Payment SDK.
+            Use <see cref="M:BreezeSdk.Runtime.Breeze.Initialize(BreezeSdk.Runtime.BreezeConfiguration)"/> to create the singleton instance before calling any other methods.
+            </summary>
+        </member>
+        <member name="P:BreezeSdk.Runtime.Breeze.Instance">
+            <summary>
+            Gets the initialized singleton instance of <see cref="T:BreezeSdk.Runtime.Breeze"/>.
+            Returns <c>null</c> if <see cref="M:BreezeSdk.Runtime.Breeze.Initialize(BreezeSdk.Runtime.BreezeConfiguration)"/> has not been called yet.
+            </summary>
+        </member>
+        <member name="M:BreezeSdk.Runtime.Breeze.Initialize(BreezeSdk.Runtime.BreezeConfiguration)">
+            <summary>
+            Initializes the Breeze SDK singleton with the provided configuration.
+            Must be called once before accessing <see cref="P:BreezeSdk.Runtime.Breeze.Instance"/> or invoking any payment methods.
+            Call <see cref="M:BreezeSdk.Runtime.Breeze.Uninitialize"/> first if you need to re-initialize with a different configuration.
+            </summary>
+            <param name="configuration">The SDK configuration. <see cref="P:BreezeSdk.Runtime.BreezeConfiguration.AppScheme"/> is required.</param>
+            <exception cref="T:System.ArgumentException">Thrown when <paramref name="configuration"/> is null or <see cref="P:BreezeSdk.Runtime.BreezeConfiguration.AppScheme"/> is empty.</exception>
+        </member>
+        <member name="M:BreezeSdk.Runtime.Breeze.Uninitialize">
+            <summary>
+            Tears down the Breeze SDK singleton, releasing all associated resources.
+            After calling this method, <see cref="P:BreezeSdk.Runtime.Breeze.Instance"/> returns <c>null</c> until <see cref="M:BreezeSdk.Runtime.Breeze.Initialize(BreezeSdk.Runtime.BreezeConfiguration)"/> is called again.
+            </summary>
+        </member>
+        <member name="E:BreezeSdk.Runtime.Breeze.OnPaymentOptionsDialogDismissed">
+            <summary>
+            Raised when the payment options dialog is dismissed.
+            The first argument is the <see cref="T:BreezeSdk.Runtime.BrzPaymentDialogDismissReason"/> indicating why it was closed;
+            the second argument is an optional JSON data payload from the dialog.
+            </summary>
+        </member>
+        <member name="E:BreezeSdk.Runtime.Breeze.OnPaymentWebviewDismissed">
+            <summary>
+            Raised when the payment web view is dismissed.
+            The first argument is the <see cref="T:BreezeSdk.Runtime.BrzPaymentWebviewDismissReason"/> indicating why it was closed;
+            the second argument is an optional JSON data payload from the web view.
+            </summary>
+        </member>
+        <member name="M:BreezeSdk.Runtime.Breeze.GetDeviceUniqueId">
+            <summary>
+            Returns a stable, device-unique identifier suitable for correlating sessions.
+            On iOS this is the vendor identifier (IDFV); on Android it is the Android ID.
+            </summary>
+            <returns>A non-empty string containing the device unique identifier.</returns>
+        </member>
+        <member name="M:BreezeSdk.Runtime.Breeze.ShowPaymentOptionsDialog(BreezeSdk.Runtime.BrzShowPaymentOptionsDialogRequest)">
+            <summary>
+            Presents the Breeze payment options dialog over the current Unity view.
+            When the user dismisses the dialog, <see cref="E:BreezeSdk.Runtime.Breeze.OnPaymentOptionsDialogDismissed"/> is raised on the main thread.
+            </summary>
+            <param name="request">The request describing the product and payment options to display.</param>
+        </member>
+        <member name="M:BreezeSdk.Runtime.Breeze.DismissPaymentPageView">
+            <summary>
+            Programmatically dismisses any currently-visible payment page web view.
+            Has no effect if the web view is not currently shown.
+            </summary>
+        </member>
+        <member name="M:BreezeSdk.Runtime.Breeze.ShowPaymentWebview(BreezeSdk.Runtime.BrzShowPaymentWebviewRequest)">
+            <summary>
+            Presents the Breeze payment web view over the current Unity view, loading the given payment URL.
+            When the user dismisses the web view, <see cref="E:BreezeSdk.Runtime.Breeze.OnPaymentWebviewDismissed"/> is raised on the main thread.
+            </summary>
+            <param name="request">The request containing the direct payment URL and optional data payload.</param>
+        </member>
+        <member name="M:BreezeSdk.Runtime.Breeze.NotifyOnPaymentOptionsDialogDismissed(BreezeSdk.Runtime.BrzPaymentDialogDismissReason,System.String)">
+            <summary>
+            Native-to-managed callback invoked by the platform layer when the payment options dialog is dismissed.
+            Forwards the event to <see cref="E:BreezeSdk.Runtime.Breeze.OnPaymentOptionsDialogDismissed"/> on the active instance.
+            </summary>
+            <param name="reason">The reason the dialog was dismissed.</param>
+            <param name="data">Optional JSON payload passed from the native dialog.</param>
+        </member>
+        <member name="M:BreezeSdk.Runtime.Breeze.NotifyOnPaymentWebviewDismissed(BreezeSdk.Runtime.BrzPaymentWebviewDismissReason,System.String)">
+            <summary>
+            Native-to-managed callback invoked by the platform layer when the payment web view is dismissed.
+            Forwards the event to <see cref="E:BreezeSdk.Runtime.Breeze.OnPaymentWebviewDismissed"/> on the active instance.
+            </summary>
+            <param name="reason">The reason the web view was dismissed.</param>
+            <param name="data">Optional JSON payload passed from the native web view.</param>
+        </member>
+        <member name="T:BreezeSdk.Runtime.BreezeConfiguration">
+            <summary>
+            Configuration object required to initialize the Breeze SDK via <see cref="M:BreezeSdk.Runtime.Breeze.Initialize(BreezeSdk.Runtime.BreezeConfiguration)"/>.
+            </summary>
+        </member>
+        <member name="P:BreezeSdk.Runtime.BreezeConfiguration.AppScheme">
+            <summary>
+            The custom URL scheme registered for your application (without the colon or slashes).
+            Used by the Breeze payment page to redirect back into your game after a payment flow.
+            Must match the scheme declared in your iOS <c>Info.plist</c> and Android <c>AndroidManifest.xml</c>.
+            Example: <c>"yourgame"</c> (results in the redirect URL <c>yourgame://...</c>).
+            </summary>
+        </member>
+        <member name="P:BreezeSdk.Runtime.BreezeConfiguration.Environment">
+            <summary>
+            Specifies which Breeze backend environment the SDK communicates with.
+            Defaults to <see cref="F:BreezeSdk.Runtime.BreezeEnvironment.Production"/>.
+            Use <see cref="F:BreezeSdk.Runtime.BreezeEnvironment.Development"/> during development and QA.
+            </summary>
+        </member>
+        <member name="T:BreezeSdk.Runtime.BreezeEnvironment">
+            <summary>
+            Selects the Breeze backend environment used by the SDK.
+            </summary>
+        </member>
+        <member name="F:BreezeSdk.Runtime.BreezeEnvironment.Production">
+            <summary>The live production environment. Use for released builds.</summary>
+        </member>
+        <member name="F:BreezeSdk.Runtime.BreezeEnvironment.Development">
+            <summary>The development/sandbox environment. Use during testing and QA.</summary>
+        </member>
+        <member name="T:BreezeSdk.Runtime.BreezeConstants">
+            <summary>
+            Constants used across the Breeze SDK.
+            </summary>
+        </member>
+        <member name="F:BreezeSdk.Runtime.BreezeConstants.SDK_VERSION">
+            <summary>
+            The current version of the Breeze SDK.
+            </summary>
+        </member>
+        <member name="T:BreezeSdk.Runtime.BreezeHelper">
+            <summary>
+            General-purpose URL and locale utilities used internally by the Breeze SDK.
+            </summary>
+        </member>
+        <member name="M:BreezeSdk.Runtime.BreezeHelper.BuildRequestUrl(System.String,System.String,System.Collections.Specialized.NameValueCollection)">
+            <summary>
+            Constructs an absolute URL from a base URL, a path, and an optional set of query parameters.
+            </summary>
+            <param name="baseUrl">The scheme and host portion of the URL (e.g., <c>"https://pay.breeze.cash"</c>).</param>
+            <param name="path">The URL path (e.g., <c>"/checkout"</c>).</param>
+            <param name="queryParams">Query parameters to append. Pass <c>null</c> or an empty collection for no query string.</param>
+            <returns>The fully-formed absolute URI string.</returns>
+        </member>
+        <member name="M:BreezeSdk.Runtime.BreezeHelper.UpdateUrlQueryParams(System.String,System.Collections.Specialized.NameValueCollection,System.Boolean)">
+            <summary>
+            Merges or appends query parameters into an existing URL.
+            </summary>
+            <param name="url">The base URL whose query string will be modified.</param>
+            <param name="extraParams">The parameters to merge in.</param>
+            <param name="appendOnly">
+            When <c>true</c>, parameters are added without removing existing keys (multi-value allowed).
+            When <c>false</c> (default), existing keys are replaced by the values in <paramref name="extraParams"/>.
+            </param>
+            <returns>The URL with the updated query string.</returns>
+        </member>
+        <member name="M:BreezeSdk.Runtime.BreezeHelper.BuildQueryString(System.Collections.Specialized.NameValueCollection)">
+            <summary>
+            Encodes a <see cref="T:System.Collections.Specialized.NameValueCollection"/> into a URL query string using Unity's URL escaping.
+            Keys or values that are <c>null</c> are treated as empty strings.
+            </summary>
+            <param name="queryParams">The parameters to encode. Returns an empty string when <c>null</c> or empty.</param>
+            <returns>A percent-encoded query string without a leading <c>?</c>, e.g. <c>"key1=val1&amp;key2=val2"</c>.</returns>
+        </member>
+        <member name="M:BreezeSdk.Runtime.BreezeHelper.GetCurrentTwoLetterIsoRegionName(System.Globalization.CultureInfo)">
+            <summary>
+            Returns the two-letter ISO 3166-1 alpha-2 country code for the given <see cref="T:System.Globalization.CultureInfo"/>.
+            Falls back to <c>"US"</c> if the culture cannot be mapped to a region (e.g., invariant or neutral cultures).
+            </summary>
+            <param name="culture">The culture to resolve to a region.</param>
+            <returns>A two-letter uppercase country code such as <c>"US"</c>, <c>"GB"</c>, or <c>"JP"</c>.</returns>
+        </member>
+        <member name="T:BreezeSdk.Runtime.BreezeBase64Helper">
+            <summary>
+            Utilities for converting between standard Base64 and URL-safe Base64url encoding (RFC 4648 §5).
+            </summary>
+        </member>
+        <member name="M:BreezeSdk.Runtime.BreezeBase64Helper.ConvertBase64UrlToBase64(System.String)">
+            <summary>
+            Converts a Base64url-encoded string to a standard Base64 string by replacing URL-safe characters
+            and re-adding padding.
+            </summary>
+            <param name="base64UrlString">The Base64url input string.</param>
+            <returns>A standard Base64 string with <c>+</c>, <c>/</c>, and <c>=</c> padding characters.</returns>
+        </member>
+        <member name="M:BreezeSdk.Runtime.BreezeBase64Helper.ConvertBase64ToBase64Url(System.String)">
+            <summary>
+            Converts a standard Base64 string to a Base64url string by replacing non-URL-safe characters
+            and stripping padding.
+            </summary>
+            <param name="base64String">The standard Base64 input string.</param>
+            <returns>A Base64url string safe for use in URLs and filenames.</returns>
+        </member>
+        <member name="M:BreezeSdk.Runtime.BreezeBase64Helper.DecodeBase64UrlToString(System.String)">
+            <summary>
+            Decodes a Base64url-encoded string to a UTF-8 string.
+            </summary>
+            <param name="base64UrlString">The Base64url-encoded input.</param>
+            <returns>The decoded UTF-8 string.</returns>
+        </member>
+        <member name="M:BreezeSdk.Runtime.BreezeBase64Helper.DecodeBase64ToBytes(System.String)">
+            <summary>
+            Decodes a standard Base64 string to a byte array.
+            </summary>
+            <param name="base64String">The Base64-encoded input.</param>
+            <returns>The decoded byte array.</returns>
+        </member>
+        <member name="M:BreezeSdk.Runtime.BreezeBase64Helper.DecodeBase64UrlToBytes(System.String)">
+            <summary>
+            Decodes a Base64url-encoded string to a byte array.
+            </summary>
+            <param name="base64UrlString">The Base64url-encoded input.</param>
+            <returns>The decoded byte array.</returns>
+        </member>
+        <member name="M:BreezeSdk.Runtime.BreezeBase64Helper.DecodeBase64ToString(System.String)">
+            <summary>
+            Decodes a standard Base64 string to a UTF-8 string.
+            </summary>
+            <param name="base64String">The Base64-encoded input.</param>
+            <returns>The decoded UTF-8 string.</returns>
+        </member>
+        <member name="T:BreezeSdk.Runtime.BreezeDateTimeExtensions">
+            <summary>
+            Extension methods for converting between <see cref="T:System.DateTime"/> and Unix timestamps.
+            </summary>
+        </member>
+        <member name="M:BreezeSdk.Runtime.BreezeDateTimeExtensions.ToUnixTimeMilliseconds(System.DateTime)">
+            <summary>
+            Converts a <see cref="T:System.DateTime"/> to a Unix timestamp in milliseconds (UTC).
+            </summary>
+            <param name="now">The date/time value to convert.</param>
+            <returns>Milliseconds elapsed since 1970-01-01T00:00:00Z.</returns>
+        </member>
+        <member name="M:BreezeSdk.Runtime.BreezeDateTimeExtensions.ToUnixTimeSeconds(System.DateTime)">
+            <summary>
+            Converts a <see cref="T:System.DateTime"/> to a Unix timestamp in seconds (UTC).
+            </summary>
+            <param name="now">The date/time value to convert.</param>
+            <returns>Seconds elapsed since 1970-01-01T00:00:00Z.</returns>
+        </member>
+        <member name="M:BreezeSdk.Runtime.BreezeDateTimeExtensions.ToDateTimeFromUnixTimeMilliseconds(System.Int64)">
+            <summary>
+            Converts a Unix timestamp in milliseconds to a <see cref="T:System.DateTime"/> (UTC).
+            </summary>
+            <param name="unixTimestampInMilliseconds">Milliseconds since the Unix epoch.</param>
+            <returns>The corresponding UTC <see cref="T:System.DateTime"/>.</returns>
+        </member>
+        <member name="M:BreezeSdk.Runtime.BreezeDateTimeExtensions.ToDateTimeFromUnixTimeSeconds(System.Int64)">
+            <summary>
+            Converts a Unix timestamp in seconds to a <see cref="T:System.DateTime"/> (UTC).
+            </summary>
+            <param name="unixTimestampInSeconds">Seconds since the Unix epoch.</param>
+            <returns>The corresponding UTC <see cref="T:System.DateTime"/>.</returns>
+        </member>
+        <member name="T:BreezeSdk.Runtime.IBreezeNative">
+            <summary>
+            Interface for platform-specific native Breeze SDK implementations.
+            </summary>
+        </member>
+        <member name="M:BreezeSdk.Runtime.IBreezeNative.GetDeviceUniqueId">
+            <summary>
+            Gets the unique device identifier.
+            </summary>
+            <returns>A string representing the unique device ID.</returns>
+        </member>
+        <member name="M:BreezeSdk.Runtime.IBreezeNative.ShowPaymentOptionsDialog(BreezeSdk.Runtime.BrzShowPaymentOptionsDialogRequest,BreezeSdk.Runtime.BrzPaymentDialogDismissCallback)">
+            <summary>
+            Shows the payment options dialog.
+            </summary>
+            <param name="request">The request configuration for the payment options dialog.</param>
+            <param name="onDismiss">Callback invoked when the dialog is dismissed.</param>
+            <returns>A result code indicating whether the dialog was shown successfully.</returns>
+        </member>
+        <member name="M:BreezeSdk.Runtime.IBreezeNative.DismissPaymentPageView">
+            <summary>
+            Dismisses the currently displayed payment page view.
+            </summary>
+        </member>
+        <member name="M:BreezeSdk.Runtime.IBreezeNative.ShowPaymentWebview(BreezeSdk.Runtime.BrzShowPaymentWebviewRequest,BreezeSdk.Runtime.BrzPaymentWebviewDismissCallback)">
+            <summary>
+            Shows the payment web view.
+            </summary>
+            <param name="request">The request configuration for the payment web view.</param>
+            <param name="onDismiss">Callback invoked when the web view is dismissed.</param>
+            <returns>A result code indicating whether the web view was shown successfully.</returns>
+        </member>
+        <member name="T:BreezeSdk.Runtime.BreezeNativeIos">
+            <summary>
+            iOS native implementation of <see cref="T:BreezeSdk.Runtime.IBreezeNative"/>.
+            </summary>
+        </member>
+        <member name="M:BreezeSdk.Runtime.BreezeNativeIos.GetDeviceUniqueId">
+            <inheritdoc />
+        </member>
+        <member name="M:BreezeSdk.Runtime.BreezeNativeIos.ShowPaymentOptionsDialog(BreezeSdk.Runtime.BrzShowPaymentOptionsDialogRequest,BreezeSdk.Runtime.BrzPaymentDialogDismissCallback)">
+            <inheritdoc />
+        </member>
+        <member name="M:BreezeSdk.Runtime.BreezeNativeIos.DismissPaymentPageView">
+            <inheritdoc />
+        </member>
+        <member name="M:BreezeSdk.Runtime.BreezeNativeIos.ShowPaymentWebview(BreezeSdk.Runtime.BrzShowPaymentWebviewRequest,BreezeSdk.Runtime.BrzPaymentWebviewDismissCallback)">
+            <inheritdoc />
+        </member>
+        <member name="T:BreezeSdk.Runtime.BrzShowPaymentOptionsDialogRequest">
+            <summary>
+            Request object passed to <see cref="M:BreezeSdk.Runtime.Breeze.ShowPaymentOptionsDialog(BreezeSdk.Runtime.BrzShowPaymentOptionsDialogRequest)"/> to configure the payment options dialog.
+            </summary>
+        </member>
+        <member name="P:BreezeSdk.Runtime.BrzShowPaymentOptionsDialogRequest.Title">
+            <summary>
+            Optional title displayed at the top of the payment options dialog.
+            </summary>
+        </member>
+        <member name="P:BreezeSdk.Runtime.BrzShowPaymentOptionsDialogRequest.ProductDisplayInfo">
+            <summary>
+            Display information for the product being purchased (name, price, icon, etc.).
+            </summary>
+        </member>
+        <member name="P:BreezeSdk.Runtime.BrzShowPaymentOptionsDialogRequest.DirectPaymentUrl">
+            <summary>
+            The deep-link URL that opens the Breeze payment web view directly.
+            Used when the user selects the "Pay with Breeze" option.
+            </summary>
+        </member>
+        <member name="P:BreezeSdk.Runtime.BrzShowPaymentOptionsDialogRequest.Data">
+            <summary>
+            An optional opaque string payload forwarded to the <see cref="E:BreezeSdk.Runtime.Breeze.OnPaymentOptionsDialogDismissed"/> event.
+            Use this to carry through any context your game needs when handling the dismissal.
+            </summary>
+        </member>
+        <member name="P:BreezeSdk.Runtime.BrzShowPaymentOptionsDialogRequest.Theme">
+            <summary>
+            Controls the color theme of the payment options dialog.
+            When <c>null</c>, the dialog follows the system appearance. Defaults to <c>null</c>.
+            </summary>
+        </member>
+        <member name="T:BreezeSdk.Runtime.BrzPaymentOptionsTheme">
+            <summary>
+            Color theme applied to the payment options dialog UI.
+            </summary>
+        </member>
+        <member name="F:BreezeSdk.Runtime.BrzPaymentOptionsTheme.Auto">
+            <summary>Follows the current system-level light/dark appearance setting.</summary>
+        </member>
+        <member name="F:BreezeSdk.Runtime.BrzPaymentOptionsTheme.Light">
+            <summary>Forces the dialog to use a light color scheme.</summary>
+        </member>
+        <member name="F:BreezeSdk.Runtime.BrzPaymentOptionsTheme.Dark">
+            <summary>Forces the dialog to use a dark color scheme.</summary>
+        </member>
+        <member name="T:BreezeSdk.Runtime.BrzProductDisplayInfo">
+            <summary>
+            Display metadata for the product shown inside the payment options dialog.
+            </summary>
+        </member>
+        <member name="P:BreezeSdk.Runtime.BrzProductDisplayInfo.DisplayName">
+            <summary>
+            Human-readable name of the product shown to the user (e.g., <c>"1000 Gold Coins"</c>).
+            </summary>
+        </member>
+        <member name="P:BreezeSdk.Runtime.BrzProductDisplayInfo.OriginalPrice">
+            <summary>
+            The regular (non-Breeze) price string shown as the original price (e.g., <c>"$9.99"</c>).
+            </summary>
+        </member>
+        <member name="P:BreezeSdk.Runtime.BrzProductDisplayInfo.BreezePrice">
+            <summary>
+            The discounted Breeze price string (e.g., <c>"$8.99"</c>).
+            </summary>
+        </member>
+        <member name="P:BreezeSdk.Runtime.BrzProductDisplayInfo.Decoration">
+            <summary>
+            Short promotional label shown on the product tile, e.g. <c>"10% off"</c>.
+            </summary>
+        </member>
+        <member name="P:BreezeSdk.Runtime.BrzProductDisplayInfo.ProductIconUrl">
+            <summary>
+            Product icon image URL. Loaded and displayed inside the dialog at runtime.
+            </summary>
+        </member>
+        <member name="T:BreezeSdk.Runtime.BrzPaymentDialogDismissCallback">
+            <summary>
+            Callback invoked by the native layer when the payment options dialog is dismissed.
+            </summary>
+            <param name="reason">The reason the dialog was dismissed.</param>
+            <param name="data">The data passed from the dialog.</param>
+        </member>
+        <member name="T:BreezeSdk.Runtime.BrzPaymentDialogDismissReason">
+            <summary>
+            Describes why the payment options dialog was dismissed.
+            Received via <see cref="E:BreezeSdk.Runtime.Breeze.OnPaymentOptionsDialogDismissed"/>.
+            </summary>
+        </member>
+        <member name="F:BreezeSdk.Runtime.BrzPaymentDialogDismissReason.CloseTapped">
+            <summary>The user tapped the close/cancel button without selecting a payment option.</summary>
+        </member>
+        <member name="F:BreezeSdk.Runtime.BrzPaymentDialogDismissReason.DirectPaymentTapped">
+            <summary>The user selected the direct Breeze payment option.</summary>
+        </member>
+        <member name="F:BreezeSdk.Runtime.BrzPaymentDialogDismissReason.AppStoreTapped">
+            <summary>The user tapped the Apple App Store in-app purchase option.</summary>
+        </member>
+        <member name="F:BreezeSdk.Runtime.BrzPaymentDialogDismissReason.GoogleStoreTapped">
+            <summary>The user tapped the Google Play Store in-app purchase option.</summary>
+        </member>
+        <member name="T:BreezeSdk.Runtime.BrzShowPaymentOptionsResultCode">
+            <summary>
+            Result code returned by the native layer after calling ShowPaymentOptionsDialog.
+            Used internally; games should rely on <see cref="T:BreezeSdk.Runtime.BrzPaymentDialogDismissReason"/> for flow control.
+            </summary>
+        </member>
+        <member name="F:BreezeSdk.Runtime.BrzShowPaymentOptionsResultCode.Success">
+            <summary>The dialog was shown successfully.</summary>
+        </member>
+        <member name="F:BreezeSdk.Runtime.BrzShowPaymentOptionsResultCode.NullInput">
+            <summary>A null input parameter was provided.</summary>
+        </member>
+        <member name="F:BreezeSdk.Runtime.BrzShowPaymentOptionsResultCode.InvalidUtf8">
+            <summary>The request JSON contained invalid UTF-8 characters.</summary>
+        </member>
+        <member name="F:BreezeSdk.Runtime.BrzShowPaymentOptionsResultCode.JsonDecodingFailed">
+            <summary>The request JSON could not be decoded.</summary>
+        </member>
+        <member name="T:BreezeSdk.Runtime.BrzShowPaymentWebviewRequest">
+            <summary>
+            Request object passed to <see cref="M:BreezeSdk.Runtime.Breeze.ShowPaymentWebview(BreezeSdk.Runtime.BrzShowPaymentWebviewRequest)"/> to open the Breeze payment web view.
+            </summary>
+        </member>
+        <member name="P:BreezeSdk.Runtime.BrzShowPaymentWebviewRequest.DirectPaymentUrl">
+            <summary>
+            The deep-link URL that the payment web view will load.
+            Typically provided by the Breeze backend or constructed via your game server.
+            </summary>
+        </member>
+        <member name="P:BreezeSdk.Runtime.BrzShowPaymentWebviewRequest.Data">
+            <summary>
+            An optional opaque string payload forwarded to the <see cref="E:BreezeSdk.Runtime.Breeze.OnPaymentWebviewDismissed"/> event.
+            Use this to carry through any context your game needs when handling the dismissal.
+            </summary>
+        </member>
+        <member name="T:BreezeSdk.Runtime.BrzPaymentWebviewDismissCallback">
+            <summary>
+            Callback invoked by the native layer when the payment web view is dismissed.
+            </summary>
+            <param name="reason">The reason the web view was dismissed.</param>
+            <param name="data">Optional JSON payload passed from the native web view.</param>
+        </member>
+        <member name="T:BreezeSdk.Runtime.BrzPaymentWebviewDismissReason">
+            <summary>
+            Describes why the payment web view was dismissed.
+            Received via <see cref="E:BreezeSdk.Runtime.Breeze.OnPaymentWebviewDismissed"/>.
+            </summary>
+        </member>
+        <member name="F:BreezeSdk.Runtime.BrzPaymentWebviewDismissReason.Dismissed">
+            <summary>The user dismissed the web view manually without completing a payment.</summary>
+        </member>
+        <member name="F:BreezeSdk.Runtime.BrzPaymentWebviewDismissReason.PaymentSuccess">
+            <summary>The payment was completed successfully.</summary>
+        </member>
+        <member name="F:BreezeSdk.Runtime.BrzPaymentWebviewDismissReason.PaymentFailure">
+            <summary>The payment failed or was declined.</summary>
+        </member>
+        <member name="F:BreezeSdk.Runtime.BrzPaymentWebviewDismissReason.LoadError">
+            <summary>The web view failed to load the payment page (e.g., no network).</summary>
+        </member>
+        <member name="T:BreezeSdk.Runtime.BrzShowPaymentWebviewResultCode">
+            <summary>
+            Result code returned by the native layer after calling ShowPaymentWebview.
+            Used internally; games should rely on <see cref="T:BreezeSdk.Runtime.BrzPaymentWebviewDismissReason"/> for flow control.
+            </summary>
+        </member>
+        <member name="F:BreezeSdk.Runtime.BrzShowPaymentWebviewResultCode.Success">
+            <summary>The web view was shown successfully.</summary>
+        </member>
+        <member name="F:BreezeSdk.Runtime.BrzShowPaymentWebviewResultCode.NullInput">
+            <summary>A null input parameter was provided.</summary>
+        </member>
+        <member name="F:BreezeSdk.Runtime.BrzShowPaymentWebviewResultCode.InvalidUtf8">
+            <summary>The request JSON contained invalid UTF-8 characters.</summary>
+        </member>
+        <member name="F:BreezeSdk.Runtime.BrzShowPaymentWebviewResultCode.JsonDecodingFailed">
+            <summary>The request JSON could not be decoded.</summary>
+        </member>
+        <member name="F:BreezeSdk.Runtime.BrzShowPaymentWebviewResultCode.InvalidUrl">
+            <summary>The provided payment URL was malformed or invalid.</summary>
+        </member>
+        <member name="T:BreezeSdk.Runtime.DialogDismissedPayload">
+            <summary>
+            JSON payload received from the native layer when the payment options dialog is dismissed.
+            </summary>
+        </member>
+        <member name="F:BreezeSdk.Runtime.DialogDismissedPayload.Reason">
+            <summary>
+            The reason the payment options dialog was dismissed.
+            </summary>
+        </member>
+        <member name="F:BreezeSdk.Runtime.DialogDismissedPayload.Data">
+            <summary>
+            Optional data passed back from the dialog.
+            </summary>
+        </member>
+        <member name="T:BreezeSdk.Runtime.WebViewDismissedPayload">
+            <summary>
+            JSON payload received from the native layer when the payment web view is dismissed.
+            </summary>
+        </member>
+        <member name="F:BreezeSdk.Runtime.WebViewDismissedPayload.Reason">
+            <summary>
+            The reason the payment web view was dismissed.
+            </summary>
+        </member>
+        <member name="F:BreezeSdk.Runtime.WebViewDismissedPayload.Data">
+            <summary>
+            Optional data passed back from the web view.
+            </summary>
+        </member>
+        <member name="T:BreezeSdk.Runtime.BreezeNativeNoop">
+            <summary>
+            No-op implementation of <see cref="T:BreezeSdk.Runtime.IBreezeNative"/> used in the Unity Editor and unsupported platforms.
+            </summary>
+        </member>
+        <member name="M:BreezeSdk.Runtime.BreezeNativeNoop.GetDeviceUniqueId">
+            <inheritdoc />
+        </member>
+        <member name="M:BreezeSdk.Runtime.BreezeNativeNoop.ShowPaymentOptionsDialog(BreezeSdk.Runtime.BrzShowPaymentOptionsDialogRequest,BreezeSdk.Runtime.BrzPaymentDialogDismissCallback)">
+            <inheritdoc />
+        </member>
+        <member name="M:BreezeSdk.Runtime.BreezeNativeNoop.DismissPaymentPageView">
+            <inheritdoc />
+        </member>
+        <member name="M:BreezeSdk.Runtime.BreezeNativeNoop.ShowPaymentWebview(BreezeSdk.Runtime.BrzShowPaymentWebviewRequest,BreezeSdk.Runtime.BrzPaymentWebviewDismissCallback)">
+            <inheritdoc />
+        </member>
+        <member name="T:UnitySourceGeneratedAssemblyMonoScriptTypes_v1.MonoScriptData">
+            <summary>
+            Data is UTF-8 encoded strings
+            </summary>
+        </member>
+    </members>
+</doc>
