@@ -467,13 +467,15 @@ func showPaymentOptionsDialog(
                 return
             }
 
-            // check if the payment page url host ends with .breeze.cash, if not dismiss with close
+            // check if the payment page url host ends with allowedHosts, if not dismiss with close
             if let urlString = request.directPaymentUrl,
                 let url = URL(string: urlString),
                 let host = url.host
             {
-                if !host.lowercased().hasSuffix(".breeze.cash") {
-                    print("Warning: Direct payment URL host is not .breeze.cash")
+                let lower = host.lowercased()
+                let allowed = BreezeConstants.allowedHosts.contains { lower.hasSuffix($0) }
+                if !allowed {
+                    print("Warning: Direct payment URL host not allowed: \(host)")
                     onDismiss?(.closeTapped, request.data)
                     return
                 }

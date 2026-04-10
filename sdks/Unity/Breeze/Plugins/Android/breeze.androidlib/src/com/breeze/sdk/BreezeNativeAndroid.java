@@ -93,8 +93,21 @@ public class BreezeNativeAndroid {
             try {
                 Uri uri = Uri.parse(directPaymentUrl);
                 String host = uri.getHost();
-                if (host == null || !host.toLowerCase().endsWith(".breeze.cash")) {
-                    Log.w(TAG, "Direct payment URL host is not .breeze.cash: " + host);
+                if (host == null) {
+                    Log.w(TAG, "Direct payment URL has no host");
+                    sendDismiss(BreezePaymentDialogDismissReason.CloseTapped, data);
+                    return RESULT_SUCCESS;
+                }
+                String lower = host.toLowerCase();
+                boolean allowed = false;
+                for (String suffix : BreezeConstants.ALLOWED_HOSTS) {
+                    if (lower.endsWith(suffix)) {
+                        allowed = true;
+                        break;
+                    }
+                }
+                if (!allowed) {
+                    Log.w(TAG, "Direct payment URL host not allowed: " + host);
                     sendDismiss(BreezePaymentDialogDismissReason.CloseTapped, data);
                     return RESULT_SUCCESS;
                 }
