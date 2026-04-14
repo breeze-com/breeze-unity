@@ -1,7 +1,7 @@
 # Breeze Payment Unity SDK
 
 [![Unity](https://img.shields.io/badge/Unity-6.3%2B-blue.svg)](https://unity3d.com/)
-[![Version](https://img.shields.io/badge/version-1.1.0-green.svg)](https://github.com/breeze-com/breeze-unity)
+[![Version](https://img.shields.io/badge/version-1.2.0-green.svg)](https://github.com/breeze-com/breeze-unity)
 
 The Breeze Payment Unity SDK enables seamless payment integration for Unity games on iOS and Android platforms. Show native payment option dialogs, handle payment flows, and provide a smooth checkout experience for your players.
 
@@ -34,11 +34,26 @@ The Breeze Payment Unity SDK enables seamless payment integration for Unity game
    ```
 6. Click **Add**
 
-The SDK will be automatically installed along with its dependencies (Newtonsoft.Json).
+The SDK will be automatically installed along with its dependencies (Newtonsoft.Json, Unity IAP).
+
+## Prerequisites
+
+Before integrating the SDK, you need a Breeze merchant account and a game server that creates payment pages via the Breeze API.
+
+1. **Set up a merchant account** — [Contact Breeze Sales](https://www.breeze.com/sales) to get your account credentials and product configuration.
+2. **Integrate your game server** — Follow the [Quick Start guide](https://docs.breeze.com/docs/quick-start) to create payment pages from your backend. The SDK needs a `directPaymentUrl` (returned by your server) to show payment dialogs. See [YourGameClient.cs](sdks/Unity/Breeze/Samples~/BreezeDemo/Scripts/YourGameClient.cs) for a reference implementation.
 
 ## Quick Start
 
-### 1. Initialize the SDK
+### 1. Configure the SDK
+
+Open **Tools** → **Breeze** → **Setup** in the Unity Editor. Enter your app's custom URL scheme (e.g. `mygame`) and click **Save Settings**. This:
+
+- Creates a `BreezeRuntimeSettings` asset that the SDK reads at runtime
+- Stores your settings in `ProjectSettings/BreezeSettings.json`
+- Automatically configures deep links for iOS (`Info.plist`) and Android (`AndroidManifest.xml`) during builds
+
+### 2. Initialize the SDK
 
 Initialize Breeze in your game's startup code (e.g., in a MonoBehaviour's `Start()` method):
 
@@ -49,11 +64,8 @@ public class GameManager : MonoBehaviour
 {
     void Start()
     {
-        Breeze.Initialize(new BreezeConfiguration()
-        {
-            AppScheme = "mygame://",  // Your app's custom URL scheme
-            Environment = BreezeEnvironment.Production,
-        });
+        // AppScheme is loaded automatically from the Breeze Setup window settings
+        Breeze.Initialize();
     }
 
     void OnDestroy()
@@ -63,9 +75,19 @@ public class GameManager : MonoBehaviour
 }
 ```
 
+You can still pass a `BreezeConfiguration` explicitly if needed — any values you set will override the editor settings:
+
+```csharp
+Breeze.Initialize(new BreezeConfiguration()
+{
+    AppScheme = "mygame",  // Overrides the value from Breeze Setup
+    Environment = BreezeEnvironment.Production,
+});
+```
+
 > **Note:** `Initialize()` can only be called once. Call `Uninitialize()` first if you need to re-initialize with different settings.
 
-### 2. Show Payment Options Dialog
+### 3. Show Payment Options Dialog
 
 Display a payment options dialog when the user wants to make a purchase:
 
@@ -116,7 +138,7 @@ void OnPaymentDialogDismissed(BrzPaymentDialogDismissReason reason, string data)
 }
 ```
 
-### 3. Show Payment Webview (Alternative)
+### 4. Show Payment Webview (Alternative)
 
 Instead of a payment options dialog, you can open the Breeze payment page directly inside an in-app webview. This skips the payment method selection step and takes the player straight to the payment page.
 
@@ -169,7 +191,7 @@ void OnPaymentWebviewDismissed(BrzPaymentWebviewDismissReason reason, string dat
 
 > **Note:** Unlike `ShowPaymentOptionsDialog`, the webview handles the entire payment flow natively — no deep link handling or `DismissPaymentPageView()` call is needed.
 
-### 4. Set Up Deep Links
+### 5. Set Up Deep Links
 
 Breeze uses deep links to return the player to your app after payment:
 
@@ -177,11 +199,25 @@ Breeze uses deep links to return the player to your app after payment:
 - `<your-app-scheme>://breeze-payment/purchase/failure`
 
 **Setup:**
-1. Follow the [Unity deep linking guide](https://docs.unity3d.com/6000.3/Documentation/Manual/deep-linking-ios.html)
-2. After generating `Unity-iPhone.xcodeproj`, verify in Xcode:
-   - `Info.plist` → `URL Types` → `Item 0` → `URL Schemes` → `Item 0` = your scheme (e.g. `mygame`, **without** `://`)
 
-**Create payment page URLs on your server** with the correct redirect URLs:
+If you used the **Breeze Setup** window (Step 1), deep links are configured automatically during builds — the SDK's post-process scripts add the URL scheme to `Info.plist` (iOS) and `AndroidManifest.xml` (Android) for you.
+
+To verify manually after building:
+- **iOS:** In Xcode, check `Info.plist` → `URL Types` → `Item 0` → `URL Schemes` → `Item 0` = your scheme (e.g. `mygame`, **without** `://`)
+- **Android:** Check `AndroidManifest.xml` for an `intent-filter` with your scheme and host `breeze-payment`
+
+**Pass return URLs when creating a payment page on your server.** These tell Breeze where to redirect the player after payment. The SDK provides them automatically via `Breeze.Instance.SuccessReturnUrl` and `Breeze.Instance.FailureReturnUrl`, so your game client should forward them to your server:
+
+```csharp
+var request = new CreateOrderApiRequest
+{
+    // ...
+    SuccessReturnUrl = Breeze.Instance.SuccessReturnUrl,  // e.g. mygame://breeze-payment/purchase/success
+    FailReturnUrl = Breeze.Instance.FailureReturnUrl,      // e.g. mygame://breeze-payment/purchase/failure
+};
+```
+
+Your server then passes these URLs when calling the Breeze API to create a payment page:
 ```json
 {
   "successReturnUrl": "mygame://breeze-payment/purchase/success",
@@ -189,7 +225,7 @@ Breeze uses deep links to return the player to your app after payment:
 }
 ```
 
-See: [Create a Payment Page](https://docs.breeze.cash/docs/quick-start#3-create-a-payment-page)
+See: [Create a Payment Page](https://docs.breeze.com/docs/quick-start#3-create-a-payment-page)
 
 **Handle the deep link in Unity:**
 ```csharp
@@ -214,7 +250,7 @@ void OnPaymentPageResult(string url)
 xcrun simctl openurl booted "mygame://breeze-payment/purchase/success"
 ```
 
-### 5. Verify Payment (Recommended)
+### 6. Verify Payment (Recommended)
 
 ⚠️ **Never grant items based on the deep link URL alone.** Deep links can be spoofed by any app on the device. Always verify the payment status with your game server.
 
@@ -229,7 +265,7 @@ Player taps "Pay" → Breeze browser opens → Player pays
                               Game grants items ✅
 ```
 
-### 6. Recovery on App Restart
+### 7. Recovery on App Restart
 
 If the game is killed during payment, the Breeze webhook still fires and your server knows the order is paid. But the client never polled, so items aren't granted in that session.
 
@@ -305,11 +341,14 @@ Custom URL schemes (`mygame://`) are inherently insecure — any app can registe
 
 ## API Reference
 
+For the full API documentation, see the [online API reference](https://breeze-com.github.io/breeze-unity/api/BreezeSdk.Runtime.html).
+
 ### `Breeze`
 
 | Method | Description |
 |--------|-------------|
-| `Breeze.Initialize(config)` | Initialize the SDK. Must be called once before any other method. |
+| `Breeze.Initialize()` | Initialize the SDK using settings from the Breeze Setup window. |
+| `Breeze.Initialize(config)` | Initialize the SDK with an explicit configuration (overrides editor settings). |
 | `Breeze.Uninitialize()` | Clean up SDK resources. Call before re-initializing. |
 | `Breeze.Instance` | Singleton instance (null if not initialized). |
 | `Instance.ShowPaymentOptionsDialog(request)` | Show the native payment options dialog. |
@@ -332,7 +371,20 @@ Custom URL schemes (`mygame://`) are inherently insecure — any app can registe
 
 ## Example Project
 
-A complete example is in [`examples/UnityBreezeDemo/`](./examples/UnityBreezeDemo/):
+### UPM Sample (Recommended)
+
+Import the demo directly from the Package Manager:
+
+1. Open **Window** → **Package Manager**
+2. Select **Breeze Payment SDK**
+3. Expand the **Samples** section
+4. Click **Import** next to **Breeze Demo**
+
+### Standalone Demo
+
+A standalone Unity project is also available in [`examples/UnityBreezeDemo/`](./examples/UnityBreezeDemo/).
+
+### Demo Contents
 
 - `ShowPaymentOptionsDialogUI.cs` — Full UI flow with dialog, deep link handling, and IAP fallback
 - `YourGameClient.cs` — Example game server client for creating orders
@@ -376,6 +428,21 @@ If you see `"BreezePayment already initialized"`, call `Breeze.Uninitialize()` b
 - This is intentional for compliance — modify `BreezePaymentOptionsDialog.swift` if expanding to other regions
 
 ## Changelog
+
+### v1.2.0
+- **Added** Breeze Setup editor window (`Tools/Breeze/Setup`) with automatic deep link configuration for iOS and Android
+- **Added** `BreezeEditorSettings` to persist app scheme and configuration in `ProjectSettings/BreezeSettings.json`
+- **Added** `BreezeRuntimeSettings` ScriptableObject to auto-load app scheme from editor setup at runtime
+- **Added** Dynamic bundle ID for iOS URL schemes in Xcode post-process (replaces hardcoded scheme)
+- **Added** `com.unity.purchasing` as a package dependency
+- **Added** UPM sample registration — demo is now importable via Package Manager (`Samples~/BreezeDemo`)
+- **Changed** Migrated demo scene to Universal Render Pipeline (URP)
+- **Changed** Renamed `Documents/` to `Documentation~/` to exclude docs from package installation
+- **Changed** Minimum Unity version set to `6000.3`
+- **Fixed** Unused variable warning caused by `BREEZE_DEBUG` compile flag in `BreezeNativeAndroid.cs`
+- **Fixed** `IapDemoPostProcess` StoreKit path and added `UNITY_IOS`/`UNITY_EDITOR` platform guards
+- **Removed** `csc.rsp` from Runtime
+- **Removed** Unused demo assets (manually placed `AndroidManifest.xml`, UI Toolkit settings)
 
 ### v1.1.0
 - **Added** `Breeze.Instance.ShowPaymentWebview` show payment page in webview instead of browser tabs

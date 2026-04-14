@@ -1,7 +1,7 @@
 # Breeze Payment SDK — API Reference
 
 **Package:** `com.breeze.payment-unity`  
-**Namespace:** global (no namespace — all types are in the global namespace)  
+**Namespace:** `BreezeSdk.Runtime`  
 **Platforms:** iOS 15.0+, Android API 21+  
 
 ---
@@ -11,14 +11,15 @@
 1. [Breeze](#breeze)
 2. [BreezeConfiguration](#breezeconfiguration)
 3. [BreezeEnvironment](#breezeenvironment)
-4. [BrzShowPaymentOptionsDialogRequest](#brzshowpaymentoptionsdialogRequest)
-5. [BrzPaymentOptionsTheme](#brzpaymentoptionstheme)
-6. [BrzProductDisplayInfo](#brzproductdisplayinfo)
-7. [BrzPaymentDialogDismissReason](#brzpaymentdialogdismissreason)
-8. [BrzShowPaymentWebviewRequest](#brzshowpaymentwebviewrequest)
-9. [BrzPaymentWebviewDismissReason](#brzpaymentwebviewdismissreason)
-10. [Delegates](#delegates)
-11. [Internal Result Codes](#internal-result-codes)
+4. [BreezeRuntimeSettings](#breezeruntimesettings)
+5. [BrzShowPaymentOptionsDialogRequest](#brzshowpaymentoptionsdialogRequest)
+6. [BrzPaymentOptionsTheme](#brzpaymentoptionstheme)
+7. [BrzProductDisplayInfo](#brzproductdisplayinfo)
+8. [BrzPaymentDialogDismissReason](#brzpaymentdialogdismissreason)
+9. [BrzShowPaymentWebviewRequest](#brzshowpaymentwebviewrequest)
+10. [BrzPaymentWebviewDismissReason](#brzpaymentwebviewdismissreason)
+11. [Delegates](#delegates)
+12. [Internal Result Codes](#internal-result-codes)
 
 ---
 
@@ -28,15 +29,23 @@ The main entry point for the Breeze Payment SDK. A singleton — initialize once
 
 ### Static Methods
 
+#### `Initialize()`
+
+Initializes the SDK singleton using settings from the Breeze Setup editor window. The `AppScheme` is loaded automatically from the `BreezeRuntimeSettings` asset. Must be called before accessing `Instance` or invoking any payment methods. Logs a warning and returns immediately if already initialized.
+
+**Throws:** `ArgumentException` — when the `BreezeRuntimeSettings` asset is missing or `AppScheme` is empty.
+
+---
+
 #### `Initialize(BreezeConfiguration configuration)`
 
-Initializes the SDK singleton. Must be called before accessing `Instance` or invoking any payment methods. Logs a warning and returns immediately if already initialized.
+Initializes the SDK singleton with the provided configuration. If `AppScheme` is not set on the configuration, it is loaded automatically from the `BreezeRuntimeSettings` asset. Must be called before accessing `Instance` or invoking any payment methods. Logs a warning and returns immediately if already initialized.
 
 | Parameter | Type | Description |
 |---|---|---|
-| `configuration` | `BreezeConfiguration` | SDK configuration. `AppScheme` is required. |
+| `configuration` | `BreezeConfiguration` | SDK configuration. If `AppScheme` is empty, it is read from editor settings. |
 
-**Throws:** `ArgumentException` — when `configuration` is `null` or `AppScheme` is empty.
+**Throws:** `ArgumentException` — when `configuration` is `null` or `AppScheme` cannot be resolved.
 
 ---
 
@@ -70,6 +79,38 @@ Returns the current singleton instance, or `null` if `Initialize` has not been c
 
 ---
 
+### Instance Properties
+
+#### `AppScheme`
+
+```csharp
+public string AppScheme { get; }
+```
+
+Returns the custom URL scheme used by this SDK instance (e.g. `"yourgame"`).
+
+---
+
+#### `SuccessReturnUrl`
+
+```csharp
+public string SuccessReturnUrl { get; }
+```
+
+The deep-link URL that the Breeze payment page redirects to on a successful purchase (e.g. `yourgame://breeze-payment/purchase/success`). Pass this as `successReturnUrl` when creating a payment page on your server.
+
+---
+
+#### `FailureReturnUrl`
+
+```csharp
+public string FailureReturnUrl { get; }
+```
+
+The deep-link URL that the Breeze payment page redirects to on a failed or cancelled purchase (e.g. `yourgame://breeze-payment/purchase/failure`). Pass this as `failReturnUrl` when creating a payment page on your server.
+
+---
+
 ### Instance Methods
 
 #### `GetDeviceUniqueId()`
@@ -81,6 +122,22 @@ public string GetDeviceUniqueId()
 Returns a stable device-unique identifier. On iOS this is the vendor identifier (IDFV); on Android it is the Android ID.
 
 **Returns:** A non-empty string.
+
+---
+
+#### `IsPaymentSuccessUrl(string url)`
+
+```csharp
+public bool IsPaymentSuccessUrl(string url)
+```
+
+Checks whether the given deep-link URL represents a successful payment redirect. The URL alone does not guarantee the payment succeeded — always verify the result on your server.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `url` | `string` | The deep-link URL received via `Application.deepLinkActivated`. |
+
+**Returns:** `true` if the URL matches the Breeze payment success pattern; otherwise `false`.
 
 ---
 
@@ -164,7 +221,7 @@ public sealed class BreezeConfiguration
 
 | Property | Type | Default | Description |
 |---|---|---|---|
-| `AppScheme` | `string` | — | **Required.** Custom URL scheme registered for your app (without `://`), e.g. `"yourgame"`. Must match your `Info.plist` / `AndroidManifest.xml` declaration. |
+| `AppScheme` | `string` | — | Custom URL scheme registered for your app (without `://`), e.g. `"yourgame"`. If empty, loaded automatically from `BreezeRuntimeSettings` (configured via **Tools → Breeze → Setup**). |
 | `Environment` | `BreezeEnvironment` | `Production` | Backend environment the SDK connects to. Use `Development` during testing. |
 
 ---
@@ -181,6 +238,40 @@ public enum BreezeEnvironment
 |---|---|---|
 | `Production` | `0` | Live environment. Use for released builds. |
 | `Development` | `1` | Sandbox environment. Use during development and QA. |
+
+---
+
+## BreezeRuntimeSettings
+
+ScriptableObject that stores Breeze SDK configuration so it can be loaded at runtime via `Resources.Load`. Managed automatically by the Breeze Setup editor window (**Tools → Breeze → Setup**) — you should not need to edit this asset by hand.
+
+```csharp
+public class BreezeRuntimeSettings : ScriptableObject
+```
+
+### Properties
+
+| Property | Type | Description |
+|---|---|---|
+| `AppScheme` | `string` | The custom URL scheme configured via the Breeze Setup window (e.g. `"yourgame"`). |
+| `Environment` | `BreezeEnvironment` | The Breeze backend environment. Defaults to `Production`. |
+
+### Static Methods
+
+#### `Load()`
+
+```csharp
+public static BreezeRuntimeSettings Load()
+```
+
+Loads the settings asset from `Resources`. Returns `null` when the asset has not been created yet (i.e. Breeze Setup was never saved).
+
+### Asset Paths
+
+| Constant | Value | Description |
+|---|---|---|
+| `AssetDir` | `Assets/Breeze/Resources` | Directory where the asset is stored. |
+| `AssetPath` | `Assets/Breeze/Resources/BreezeRuntimeSettings.asset` | Full path used by the editor. |
 
 ---
 

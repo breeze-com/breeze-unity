@@ -1,7 +1,7 @@
 {
     "name": "breeze.payment-unity.Editor",
     "rootNamespace": "BreezeSdk.Editor",
-    "references": [],
+    "references": ["breeze.payment-unity"],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

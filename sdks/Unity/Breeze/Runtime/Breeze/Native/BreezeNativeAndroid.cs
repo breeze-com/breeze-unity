@@ -79,7 +79,7 @@ namespace BreezeSdk.Runtime
 
             string requestJson = JsonConvert.SerializeObject(request);
 #if BREEZE_DEBUG
-        Debug.Log($"brz_show_payment_options_dialog: request = {requestJson}");
+            Debug.Log($"brz_show_payment_options_dialog: request = {requestJson}");
 #endif
             int code = androidPluginInstance.Call<int>("showPaymentOptionsDialog", requestJson);
             return (BrzShowPaymentOptionsResultCode)code;
@@ -88,8 +88,11 @@ namespace BreezeSdk.Runtime
         /// <inheritdoc />
         public void DismissPaymentPageView()
         {
+            // On Android this is a no-op because Chrome Custom Tabs run in a separate process
+            // and are automatically removed from the back stack when the deep link returns.
+            // check the <inheritdoc /> for details
 #if BREEZE_DEBUG
-        Debug.Log("BreezeNativeAndroid: DismissPaymentPageView called (no-op on Android)");
+            Debug.Log("BreezeNativeAndroid: DismissPaymentPageView called (no-op on Android)");
 #endif
         }
 
@@ -105,7 +108,7 @@ namespace BreezeSdk.Runtime
 
             string requestJson = JsonConvert.SerializeObject(request);
 #if BREEZE_DEBUG
-        Debug.Log($"BreezeNativeAndroid: showPaymentWebview request = {requestJson}");
+            Debug.Log($"BreezeNativeAndroid: showPaymentWebview request = {requestJson}");
 #endif
             int code = androidPluginInstance.Call<int>("showPaymentWebview", requestJson);
             return (BrzShowPaymentWebviewResultCode)code;
@@ -163,7 +166,7 @@ namespace BreezeSdk.Runtime
         public void OnAndroidDialogDismissed(string jsonPayload)
         {
 #if BREEZE_DEBUG
-        Debug.Log($"BreezeAndroidCallbackReceiver: OnAndroidDialogDismissed: {jsonPayload}");
+            Debug.Log($"BreezeAndroidCallbackReceiver: OnAndroidDialogDismissed: {jsonPayload}");
 #endif
             try
             {
@@ -174,9 +177,7 @@ namespace BreezeSdk.Runtime
             }
             catch (Exception e)
             {
-#if BREEZE_DEBUG
-            Debug.LogError($"BreezeAndroidCallbackReceiver: Failed to parse dismiss payload: {e.Message}");
-#endif
+                Debug.LogError($"BreezeAndroidCallbackReceiver: Failed to parse dismiss payload: {e.Message}");
                 BreezeNativeAndroid.HandleDialogDismissed(BrzPaymentDialogDismissReason.CloseTapped, null);
             }
         }
@@ -188,7 +189,7 @@ namespace BreezeSdk.Runtime
         public void OnAndroidWebViewDismissed(string jsonPayload)
         {
 #if BREEZE_DEBUG
-        Debug.Log($"BreezeAndroidCallbackReceiver: OnAndroidWebViewDismissed: {jsonPayload}");
+            Debug.Log($"BreezeAndroidCallbackReceiver: OnAndroidWebViewDismissed: {jsonPayload}");
 #endif
             try
             {
@@ -199,9 +200,7 @@ namespace BreezeSdk.Runtime
             }
             catch (Exception e)
             {
-#if BREEZE_DEBUG
-            Debug.LogError($"BreezeAndroidCallbackReceiver: Failed to parse webview dismiss payload: {e.Message}");
-#endif
+                Debug.LogError($"BreezeAndroidCallbackReceiver: Failed to parse webview dismiss payload: {e.Message}");
                 BreezeNativeAndroid.HandleWebViewDismissed(BrzPaymentWebviewDismissReason.Dismissed, null);
             }
         }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using BreezeSdk.Runtime;
 using UnityEngine;
 using UnityEngine.Networking;
 using Newtonsoft.Json;
@@ -30,6 +31,9 @@ namespace BreezeSdk.BreezeDemo
 
     public class YourGameClient : MonoBehaviour
     {
+        // Replace with your game server's API base URL.
+        // Your server must integrate with the Breeze API to create payment pages.
+        // See: https://docs.breeze.com/docs/quick-start
         private const string GameApiUrl = "https://your-game-server-api-endpoint.local";
         private const string CreateOrderPath = "/v1/orders";
 
@@ -45,15 +49,15 @@ namespace BreezeSdk.BreezeDemo
             CreateOrderApiRequest request = new()
             {
                 LineItems = new List<LineItem>() {
-                new() {
-                    Product = order.ProductId,
-                    Quantity = order.Quantity
-                }
-            },
+                    new() {
+                        Product = order.ProductId,
+                        Quantity = order.Quantity
+                    }
+                },
                 BillingEmail = "customer@example.com",
                 ClientReferenceId = gameOrderId,
-                SuccessReturnUrl = "breezedemo://breeze-payment/purchase/success",
-                FailReturnUrl = "breezedemo://breeze-payment/purchase/failure",
+                SuccessReturnUrl = Breeze.Instance.SuccessReturnUrl,
+                FailReturnUrl = Breeze.Instance.FailureReturnUrl,
                 Customer = new CustomerReference()
                 {
                     ReferenceId = "user-superapp-test1"

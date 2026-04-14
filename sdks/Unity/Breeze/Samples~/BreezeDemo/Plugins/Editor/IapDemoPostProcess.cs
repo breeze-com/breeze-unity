@@ -1,3 +1,5 @@
+#if UNITY_EDITOR && UNITY_IOS
+
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
@@ -14,6 +16,17 @@ namespace BreezeSdk.BreezeDemo.Editor
         {
             if (target == BuildTarget.iOS)
             {
+                string fileName = "Products.storekit";
+                string sourcePath = FindStorekitFile(fileName);
+
+                if (sourcePath == null)
+                {
+                    UnityEngine.Debug.LogWarning(
+                        $"[BreezeDemo] {fileName} not found in project. " +
+                        "Skipping StoreKit configuration. If you need StoreKit testing, " +
+                        "import the BreezeDemo sample via Package Manager.");
+                    return;
+                }
 
                 string projectPath = PBXProject.GetPBXProjectPath(pathToBuiltProject);
                 PBXProject project = new PBXProject();
@@ -22,8 +35,6 @@ namespace BreezeSdk.BreezeDemo.Editor
                 string targetGuid = project.GetUnityMainTargetGuid();
 
                 // 1. Copy the .storekit file from Unity to the Xcode project folder
-                string fileName = "Products.storekit";
-                string sourcePath = Path.Combine(UnityEngine.Application.dataPath, "BreezeDemo/Plugins/iOS", fileName);
                 string destPath = Path.Combine(pathToBuiltProject, fileName);
                 File.Copy(sourcePath, destPath, true);
 
@@ -35,6 +46,24 @@ namespace BreezeSdk.BreezeDemo.Editor
 
                 SetStoreKitConfiguration(pathToBuiltProject, fileName);
             }
+        }
+
+        private static string FindStorekitFile(string fileName)
+        {
+            string[] guids = AssetDatabase.FindAssets("Products");
+            foreach (string guid in guids)
+            {
+                string assetPath = AssetDatabase.GUIDToAssetPath(guid);
+                if (assetPath.EndsWith(fileName))
+                {
+                    string fullPath = Path.Combine(
+                        Path.GetDirectoryName(UnityEngine.Application.dataPath),
+                        assetPath);
+                    if (File.Exists(fullPath))
+                        return fullPath;
+                }
+            }
+            return null;
         }
 
         private static void SetStoreKitConfiguration(string pathToBuiltProject, string storekitFileName)
@@ -85,3 +114,5 @@ namespace BreezeSdk.BreezeDemo.Editor
         }
     }
 }
+
+#endif

@@ -1,0 +1,5 @@
+{
+    "appScheme": "demo1",
+    "enableDeepLinkIos": true,
+    "enableDeepLinkAndroid": true
+}

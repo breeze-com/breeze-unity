@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-04-14
+
+- **Added** Breeze Setup editor window (`Tools/Breeze/Setup`) with automatic deep link configuration for iOS and Android
+- **Added** `BreezeEditorSettings` to persist app scheme and configuration in `ProjectSettings/BreezeSettings.json`
+- **Added** `BreezeRuntimeSettings` ScriptableObject to auto-load app scheme from editor setup at runtime
+- **Added** Dynamic bundle ID for iOS URL schemes in Xcode post-process (replaces hardcoded scheme)
+- **Added** `com.unity.purchasing` as a package dependency
+- **Added** UPM sample registration — demo is now importable via Package Manager (`Samples~/BreezeDemo`)
+- **Changed** Migrated demo scene to Universal Render Pipeline (URP)
+- **Changed** Renamed `Documents/` to `Documentation~/` to exclude docs from package installation
+- **Changed** Minimum Unity version set to `6000.3`
+- **Fixed** Unused variable warning caused by `BREEZE_DEBUG` compile flag in `BreezeNativeAndroid.cs`
+- **Fixed** `IapDemoPostProcess` StoreKit path and added `UNITY_IOS`/`UNITY_EDITOR` platform guards
+- **Removed** `csc.rsp` from Runtime
+- **Removed** Unused demo assets (manually placed `AndroidManifest.xml`, UI Toolkit settings)
+
+
 ## [1.1.0] - 2026-03-03
 
 - **Added** `Breeze.Instance.ShowPaymentWebview` show payment page in webview instead of browser tabs

@@ -5,7 +5,8 @@
       "depth": 0,
       "source": "local",
       "dependencies": {
-        "com.unity.nuget.newtonsoft-json": "3.2.2"
+        "com.unity.nuget.newtonsoft-json": "3.2.2",
+        "com.unity.purchasing": "5.2.1"
       }
     },
     "com.unity.ext.nunit": {
@@ -15,7 +16,7 @@
       "dependencies": {}
     },
     "com.unity.ide.visualstudio": {
-      "version": "2.0.26",
+      "version": "2.0.27",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -39,7 +40,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.purchasing": {
-      "version": "5.1.2",
+      "version": "5.2.1",
       "depth": 0,
       "source": "registry",
       "dependencies": {

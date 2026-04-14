@@ -31,11 +31,7 @@ namespace BreezeSdk.BreezeDemo
 
             Application.deepLinkActivated += this.OnPaymentPageResult;
 
-            Breeze.Initialize(new BreezeConfiguration()
-            {
-                AppScheme = "breezedemo://",
-                Environment = BreezeEnvironment.Production,
-            });
+            Breeze.Initialize();
 
             var root = GetComponent<UIDocument>().rootVisualElement;
             this.btnShowDialog = root.Q<Button>("show-dialog-button");
@@ -287,21 +283,10 @@ namespace BreezeSdk.BreezeDemo
             // verify the result on server side
             Debug.Log("verify the payment result on your server");
             // play confetti effect if the payment is successful, make sure verify the result on server side first
-            if (IsPaymentSuccessUrl(url))
+            if (Breeze.Instance.IsPaymentSuccessUrl(url))
             {
                 PlayPaymentSuccessEffect();
             }
-        }
-
-        static bool IsPaymentSuccessUrl(string url)
-        {
-            if (string.IsNullOrEmpty(url))
-            {
-                return false;
-            }
-            var uri = new Uri(url);
-            // the url doesn't guarantee the payment is successful, make sure verify the result on server side first
-            return uri.Host == "breeze-payment" && uri.AbsolutePath == "/purchase/success";
         }
 
         void PlayPaymentSuccessEffect()

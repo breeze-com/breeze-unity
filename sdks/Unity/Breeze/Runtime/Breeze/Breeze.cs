@@ -20,12 +20,24 @@ namespace BreezeSdk.Runtime
         public static Breeze Instance => _instance;
 
         /// <summary>
+        /// Initializes the Breeze SDK singleton using settings configured in the Breeze Setup editor window.
+        /// The <see cref="BreezeRuntimeSettings"/> asset must exist (created automatically when you save in <c>Breeze &gt; Setup</c>).
+        /// </summary>
+        /// <exception cref="ArgumentException">Thrown when the runtime settings asset is missing or <c>AppScheme</c> is empty.</exception>
+        public static void Initialize()
+        {
+            Initialize(new BreezeConfiguration());
+        }
+
+        /// <summary>
         /// Initializes the Breeze SDK singleton with the provided configuration.
+        /// If <see cref="BreezeConfiguration.AppScheme"/> is not set, it is read automatically from the
+        /// <see cref="BreezeRuntimeSettings"/> asset created by the Breeze Setup editor window.
         /// Must be called once before accessing <see cref="Instance"/> or invoking any payment methods.
         /// Call <see cref="Uninitialize"/> first if you need to re-initialize with a different configuration.
         /// </summary>
-        /// <param name="configuration">The SDK configuration. <see cref="BreezeConfiguration.AppScheme"/> is required.</param>
-        /// <exception cref="ArgumentException">Thrown when <paramref name="configuration"/> is null or <see cref="BreezeConfiguration.AppScheme"/> is empty.</exception>
+        /// <param name="configuration">The SDK configuration.</param>
+        /// <exception cref="ArgumentException">Thrown when <paramref name="configuration"/> is null or <c>AppScheme</c> cannot be resolved.</exception>
         public static void Initialize(BreezeConfiguration configuration)
         {
             if (_instance != null)
@@ -33,6 +45,19 @@ namespace BreezeSdk.Runtime
                 UnityEngine.Debug.LogWarning("BreezePayment already initialized. Call Uninitialize() first to re-initialize.");
                 return;
             }
+
+            if (configuration != null && string.IsNullOrEmpty(configuration.AppScheme))
+            {
+                var runtimeSettings = BreezeRuntimeSettings.Load();
+                if (runtimeSettings == null || string.IsNullOrEmpty(runtimeSettings.AppScheme))
+                {
+                    throw new ArgumentException(
+                        "AppScheme is not configured. Open the Breeze Setup window (Breeze > Setup) " +
+                        "in the Unity Editor to set your URL scheme, then click Save Settings.");
+                }
+                configuration.AppScheme = runtimeSettings.AppScheme;
+            }
+
             _instance = new Breeze(configuration);
         }
 
@@ -67,6 +92,45 @@ namespace BreezeSdk.Runtime
             this.ValidateConfiguration();
         }
 
+        private const string DeepLinkHost = "breeze-payment";
+        private const string SuccessPath = "/purchase/success";
+        private const string FailurePath = "/purchase/failure";
+
+        /// <summary>
+        /// Returns this AppScheme
+        /// </summary>
+        public string AppScheme => this.configuration.AppScheme;
+
+        /// <summary>
+        /// The deep-link URL that the Breeze payment page redirects to on a successful purchase.
+        /// For example: <c>yourgame://breeze-payment/purchase/success</c>.
+        /// Pass this as <c>SuccessReturnUrl</c> when creating an order on your game server.
+        /// </summary>
+        public string SuccessReturnUrl => $"{this.configuration.AppScheme}://{DeepLinkHost}{SuccessPath}";
+
+        /// <summary>
+        /// The deep-link URL that the Breeze payment page redirects to on a failed or cancelled purchase.
+        /// For example: <c>yourgame://breeze-payment/purchase/failure</c>.
+        /// Pass this as <c>FailReturnUrl</c> when creating an order on your game server.
+        /// </summary>
+        public string FailureReturnUrl => $"{this.configuration.AppScheme}://{DeepLinkHost}{FailurePath}";
+
+        /// <summary>
+        /// Checks whether the given deep-link URL represents a successful payment redirect.
+        /// The URL alone does not guarantee the payment succeeded — always verify the result on your server.
+        /// </summary>
+        /// <param name="url">The deep-link URL received via <c>Application.deepLinkActivated</c>.</param>
+        /// <returns><c>true</c> if the URL matches the Breeze payment success pattern; otherwise <c>false</c>.</returns>
+        public bool IsPaymentSuccessUrl(string url)
+        {
+            if (string.IsNullOrEmpty(url))
+                return false;
+            var uri = new Uri(url);
+            return uri.Scheme == this.configuration.AppScheme
+                && uri.Host == DeepLinkHost
+                && uri.AbsolutePath == SuccessPath;
+        }
+
         /// <summary>
         /// Returns a stable, device-unique identifier suitable for correlating sessions.
         /// On iOS this is the vendor identifier (IDFV); on Android it is the Android ID.
@@ -88,8 +152,10 @@ namespace BreezeSdk.Runtime
         }
 
         /// <summary>
-        /// Programmatically dismisses any currently-visible payment page web view.
-        /// Has no effect if the web view is not currently shown.
+        /// Programmatically dismisses any currently-visible payment page web view (iOS only).
+        /// 
+        /// On Android this is a no-op because Chrome Custom Tabs run in a separate process
+        /// and are automatically removed from the back stack when the deep link returns.
         /// </summary>
         public void DismissPaymentPageView()
         {
@@ -153,7 +219,9 @@ namespace BreezeSdk.Runtime
             }
             if (string.IsNullOrEmpty(this.configuration.AppScheme))
             {
-                throw new ArgumentException("AppScheme is required in BreezeConfiguration (e.g. 'yourgame')");
+                throw new ArgumentException(
+                    "AppScheme is required. Open the Breeze Setup window (Breeze > Setup) " +
+                    "in the Unity Editor to set your URL scheme, then click Save Settings.");
             }
         }
     }

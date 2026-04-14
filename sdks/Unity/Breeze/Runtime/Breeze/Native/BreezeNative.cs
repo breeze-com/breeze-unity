@@ -48,7 +48,10 @@ namespace BreezeSdk.Runtime
         );
 
         /// <summary>
-        /// Dismisses the currently displayed payment page view.
+        /// Dismisses the currently displayed payment page view (iOS only).
+        /// 
+        /// On Android this is a no-op because Chrome Custom Tabs run in a separate process
+        /// and are automatically removed from the back stack when the deep link returns.
         /// </summary>
         public void DismissPaymentPageView();
 
