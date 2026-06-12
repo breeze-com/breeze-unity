@@ -83,3 +83,6 @@ Icon
 .vscode
 
 *.tgz
+
+# KITT agent workspace (fetched per-run, never committed)
+.kitt/
