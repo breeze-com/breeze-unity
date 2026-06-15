@@ -103,5 +103,51 @@ namespace BreezeSdk.Runtime.Tests
         {
             Assert.IsInstanceOf<IBreezeNative>(_noop);
         }
+
+        // ─── ShowPaymentWebview ─────────────────────────────────────────────
+
+        [Test]
+        public void ShowPaymentWebview_ReturnsSuccess()
+        {
+            var request = new BrzShowPaymentWebviewRequest
+            {
+                DirectPaymentUrl = "https://pay.breeze.cash/test"
+            };
+            var result = _noop.ShowPaymentWebview(request, null);
+            Assert.AreEqual(BrzShowPaymentWebviewResultCode.Success, result);
+        }
+
+        [Test]
+        public void ShowPaymentWebview_NullRequest_ReturnsSuccess()
+        {
+            var result = _noop.ShowPaymentWebview(null, null);
+            Assert.AreEqual(BrzShowPaymentWebviewResultCode.Success, result);
+        }
+
+        [Test]
+        public void ShowPaymentWebview_WithCallback_DoesNotInvokeCallback()
+        {
+            bool called = false;
+            BrzPaymentWebviewDismissCallback cb = (reason, data) => { called = true; };
+            var request = new BrzShowPaymentWebviewRequest
+            {
+                DirectPaymentUrl = "https://pay.breeze.cash/test"
+            };
+            var result = _noop.ShowPaymentWebview(request, cb);
+            Assert.AreEqual(BrzShowPaymentWebviewResultCode.Success, result);
+            Assert.IsFalse(called);
+        }
+
+        [Test]
+        public void ShowPaymentWebview_WithDataField_ReturnsSuccess()
+        {
+            var request = new BrzShowPaymentWebviewRequest
+            {
+                DirectPaymentUrl = "https://pay.breeze.cash/page_abc",
+                Data = "{\"orderId\":\"order-42\"}"
+            };
+            var result = _noop.ShowPaymentWebview(request, null);
+            Assert.AreEqual(BrzShowPaymentWebviewResultCode.Success, result);
+        }
     }
 }
