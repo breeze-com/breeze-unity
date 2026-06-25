@@ -246,5 +246,62 @@ namespace BreezeSdk.Runtime.Tests
         {
             Assert.AreEqual(2, Enum.GetValues(typeof(BreezeEnvironment)).Length);
         }
+
+        // ─── BrzShowPaymentWebviewRequest ───────────────────────────────────
+
+        [Test]
+        public void WebviewRequest_SerializesAndDeserializes()
+        {
+            var request = new BrzShowPaymentWebviewRequest
+            {
+                DirectPaymentUrl = "https://pay.breeze.cash/page_abc123",
+                Data = "{\"orderId\":\"order-42\"}"
+            };
+            string json = JsonConvert.SerializeObject(request);
+            var rt = JsonConvert.DeserializeObject<BrzShowPaymentWebviewRequest>(json);
+            Assert.AreEqual("https://pay.breeze.cash/page_abc123", rt.DirectPaymentUrl);
+            Assert.AreEqual("{\"orderId\":\"order-42\"}", rt.Data);
+        }
+
+        [Test]
+        public void WebviewRequest_AllFieldsNull_Serializes()
+        {
+            var request = new BrzShowPaymentWebviewRequest();
+            string json = JsonConvert.SerializeObject(request);
+            var rt = JsonConvert.DeserializeObject<BrzShowPaymentWebviewRequest>(json);
+            Assert.IsNull(rt.DirectPaymentUrl);
+            Assert.IsNull(rt.Data);
+        }
+
+        [Test]
+        public void WebviewRequest_JsonPropertyNames_Correct()
+        {
+            var request = new BrzShowPaymentWebviewRequest
+            {
+                DirectPaymentUrl = "https://pay.breeze.cash/test",
+                Data = "payload"
+            };
+            string json = JsonConvert.SerializeObject(request);
+            Assert.IsTrue(json.Contains("\"directPaymentUrl\""));
+            Assert.IsTrue(json.Contains("\"data\""));
+        }
+
+        // ─── BrzShowPaymentWebviewResultCode ────────────────────────────────
+
+        [Test]
+        public void WebviewResultCode_HasExpectedValues()
+        {
+            Assert.AreEqual(0, (int)BrzShowPaymentWebviewResultCode.Success);
+            Assert.AreEqual(1, (int)BrzShowPaymentWebviewResultCode.NullInput);
+            Assert.AreEqual(2, (int)BrzShowPaymentWebviewResultCode.InvalidUtf8);
+            Assert.AreEqual(3, (int)BrzShowPaymentWebviewResultCode.JsonDecodingFailed);
+            Assert.AreEqual(4, (int)BrzShowPaymentWebviewResultCode.InvalidUrl);
+        }
+
+        [Test]
+        public void WebviewResultCode_AllValues_Count()
+        {
+            Assert.AreEqual(5, Enum.GetValues(typeof(BrzShowPaymentWebviewResultCode)).Length);
+        }
     }
 }
