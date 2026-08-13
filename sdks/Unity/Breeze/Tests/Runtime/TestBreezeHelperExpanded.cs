@@ -38,6 +38,13 @@ namespace BreezeSdk.Runtime.Tests
             Assert.IsTrue(result.Contains("z=3"));
         }
 
+        [Test]
+        public void BuildRequestUrl_NullQueryParams_ReturnsCleanUrl()
+        {
+            string result = BreezeHelper.BuildRequestUrl("https://example.com", "/checkout", null);
+            Assert.AreEqual("https://example.com/checkout", result);
+        }
+
         // ─── UpdateUrlQueryParams edge cases ────────────────────────────────
 
         [Test]
@@ -160,6 +167,13 @@ namespace BreezeSdk.Runtime.Tests
             Assert.AreEqual("US", BreezeHelper.GetCurrentTwoLetterIsoRegionName(culture));
         }
 
+        [Test]
+        public void GetRegionName_FrFR_ReturnsFR()
+        {
+            var culture = new System.Globalization.CultureInfo("fr-FR");
+            Assert.AreEqual("FR", BreezeHelper.GetCurrentTwoLetterIsoRegionName(culture));
+        }
+
         // ─── BreezeBase64Helper ─────────────────────────────────────────────
 
         [Test]
@@ -231,6 +245,38 @@ namespace BreezeSdk.Runtime.Tests
             Assert.IsTrue(result.EndsWith("="));
         }
 
+        // ─── DecodeBase64UrlToBytes ─────────────────────────────────────────
+
+        [Test]
+        public void DecodeBase64UrlToBytes_HelloWorld()
+        {
+            // "SGVsbG8gV29ybGQ" is base64url for "Hello World" — length%4==3, one '=' restored
+            byte[] bytes = BreezeBase64Helper.DecodeBase64UrlToBytes("SGVsbG8gV29ybGQ");
+            Assert.AreEqual("Hello World", System.Text.Encoding.UTF8.GetString(bytes));
+        }
+
+        [Test]
+        public void DecodeBase64UrlToBytes_KnownBytes_NoUrlSafeChars()
+        {
+            // "AQID" is valid as both base64 and base64url; decodes to {1, 2, 3}
+            byte[] bytes = BreezeBase64Helper.DecodeBase64UrlToBytes("AQID");
+            Assert.AreEqual(3, bytes.Length);
+            Assert.AreEqual(1, bytes[0]);
+            Assert.AreEqual(2, bytes[1]);
+            Assert.AreEqual(3, bytes[2]);
+        }
+
+        [Test]
+        public void DecodeBase64UrlToBytes_WithUrlSafeChars_ConvertsCorrectly()
+        {
+            // "-_8A" is base64url for {251, 255, 0}: '-'→'+', '_'→'/' before decoding
+            byte[] bytes = BreezeBase64Helper.DecodeBase64UrlToBytes("-_8A");
+            Assert.AreEqual(3, bytes.Length);
+            Assert.AreEqual(251, bytes[0]);
+            Assert.AreEqual(255, bytes[1]);
+            Assert.AreEqual(0, bytes[2]);
+        }
+
         // ─── BreezeDateTimeExtensions ───────────────────────────────────────
 
         [Test]
@@ -261,6 +307,15 @@ namespace BreezeSdk.Runtime.Tests
             long unix = now.ToUnixTimeSeconds();
             var back = unix.ToDateTimeFromUnixTimeSeconds();
             Assert.AreEqual(now, back);
+        }
+
+        [Test]
+        public void ToDateTimeFromUnixTimeMilliseconds_NonEpoch_Roundtrip()
+        {
+            var original = new DateTime(2024, 3, 15, 10, 30, 0, DateTimeKind.Utc);
+            long millis = original.ToUnixTimeMilliseconds();
+            var result = millis.ToDateTimeFromUnixTimeMilliseconds();
+            Assert.AreEqual(original, result);
         }
 
         // ─── BreezeConstants ────────────────────────────────────────────────
