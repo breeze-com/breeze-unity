@@ -144,6 +144,39 @@ namespace BreezeSdk.Runtime.Tests
             Assert.AreEqual("key=value", result);
         }
 
+        [Test]
+        public void BuildQueryString_MultipleParams_JoinsWithAmpersand()
+        {
+            var nvc = new NameValueCollection { { "a", "1" }, { "b", "2" } };
+            string result = BreezeHelper.BuildQueryString(nvc);
+            Assert.IsTrue(result.Contains("a=1"));
+            Assert.IsTrue(result.Contains("b=2"));
+            Assert.IsTrue(result.Contains("&"));
+        }
+
+        [Test]
+        public void BuildQueryString_MultipleValuesForSameKey_ExpandsEach()
+        {
+            var nvc = new NameValueCollection();
+            nvc.Add("k", "v1");
+            nvc.Add("k", "v2");
+            string result = BreezeHelper.BuildQueryString(nvc);
+            Assert.IsTrue(result.Contains("k=v1"));
+            Assert.IsTrue(result.Contains("k=v2"));
+            Assert.IsTrue(result.Contains("&"));
+        }
+
+        [Test]
+        public void BuildQueryString_NullValueParam_HandledGracefully()
+        {
+            // Mono's NameValueCollection.GetValues returns null for a null-valued entry
+            // → hits the else branch in BuildQueryString (key emitted without '=')
+            var nvc = new NameValueCollection { { "key", null } };
+            string result = BreezeHelper.BuildQueryString(nvc);
+            Assert.IsNotNull(result);
+            Assert.IsTrue(result.Contains("key"));
+        }
+
         // ─── GetCurrentTwoLetterIsoRegionName ───────────────────────────────
 
         [Test]
@@ -245,6 +278,14 @@ namespace BreezeSdk.Runtime.Tests
             Assert.IsTrue(result.EndsWith("="));
         }
 
+        [Test]
+        public void ConvertBase64UrlToBase64_PaddingMod0_NoPaddingAdded()
+        {
+            // Length % 4 == 0 → case 0: break — no padding appended, no char replacement
+            string result = BreezeBase64Helper.ConvertBase64UrlToBase64("AAAA");
+            Assert.AreEqual("AAAA", result);
+        }
+
         // ─── DecodeBase64UrlToBytes ─────────────────────────────────────────
 
         [Test]
@@ -287,6 +328,14 @@ namespace BreezeSdk.Runtime.Tests
         }
 
         [Test]
+        public void ToUnixTimeMilliseconds_KnownDatetime_ReturnsExpectedMs()
+        {
+            // 2000-01-01 UTC = 946 684 800 000 ms since epoch
+            var dt = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            Assert.AreEqual(946_684_800_000L, dt.ToUnixTimeMilliseconds());
+        }
+
+        [Test]
         public void ToUnixTimeSeconds_Epoch_ReturnsZero()
         {
             var epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -294,9 +343,24 @@ namespace BreezeSdk.Runtime.Tests
         }
 
         [Test]
+        public void ToUnixTimeSeconds_KnownDatetime_ReturnsExpectedSeconds()
+        {
+            // 2000-01-01 UTC = 946 684 800 s since epoch
+            var dt = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            Assert.AreEqual(946_684_800L, dt.ToUnixTimeSeconds());
+        }
+
+        [Test]
         public void ToDateTimeFromUnixTimeMilliseconds_Zero_ReturnsEpoch()
         {
             var result = 0L.ToDateTimeFromUnixTimeMilliseconds();
+            Assert.AreEqual(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc), result);
+        }
+
+        [Test]
+        public void ToDateTimeFromUnixTimeSeconds_Zero_ReturnsEpoch()
+        {
+            var result = 0L.ToDateTimeFromUnixTimeSeconds();
             Assert.AreEqual(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc), result);
         }
 
