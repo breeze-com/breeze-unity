@@ -286,6 +286,14 @@ namespace BreezeSdk.Runtime.Tests
             Assert.AreEqual("AAAA", result);
         }
 
+        [Test]
+        public void ConvertBase64UrlToBase64_PaddingMod0_CharReplacementStillApplies()
+        {
+            // Length % 4 == 0 so no padding is added, but '-' → '+' and '_' → '/' must still run
+            string result = BreezeBase64Helper.ConvertBase64UrlToBase64("AA-_");
+            Assert.AreEqual("AA+/", result);
+        }
+
         // ─── DecodeBase64UrlToBytes ─────────────────────────────────────────
 
         [Test]

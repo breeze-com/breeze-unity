@@ -303,5 +303,99 @@ namespace BreezeSdk.Runtime.Tests
         {
             Assert.AreEqual(5, Enum.GetValues(typeof(BrzShowPaymentWebviewResultCode)).Length);
         }
+
+        // ─── DialogDismissedPayload: serialization ───────────────────────────
+
+        [Test]
+        public void DialogPayload_Serializes_CloseTapped()
+        {
+            var payload = new DialogDismissedPayload
+            {
+                Reason = BrzPaymentDialogDismissReason.CloseTapped,
+                Data = "test"
+            };
+            string json = JsonConvert.SerializeObject(payload);
+            Assert.IsTrue(json.Contains("\"CloseTapped\""));
+            Assert.IsTrue(json.Contains("test"));
+        }
+
+        [Test]
+        public void DialogPayload_Serializes_DirectPaymentTapped()
+        {
+            var payload = new DialogDismissedPayload { Reason = BrzPaymentDialogDismissReason.DirectPaymentTapped };
+            string json = JsonConvert.SerializeObject(payload);
+            Assert.IsTrue(json.Contains("\"DirectPaymentTapped\""));
+        }
+
+        [Test]
+        public void DialogPayload_Serializes_AppStoreTapped()
+        {
+            var payload = new DialogDismissedPayload { Reason = BrzPaymentDialogDismissReason.AppStoreTapped };
+            string json = JsonConvert.SerializeObject(payload);
+            Assert.IsTrue(json.Contains("\"AppStoreTapped\""));
+        }
+
+        [Test]
+        public void DialogPayload_Serializes_GoogleStoreTapped()
+        {
+            var payload = new DialogDismissedPayload { Reason = BrzPaymentDialogDismissReason.GoogleStoreTapped };
+            string json = JsonConvert.SerializeObject(payload);
+            Assert.IsTrue(json.Contains("\"GoogleStoreTapped\""));
+        }
+
+        [Test]
+        public void DialogPayload_JsonPropertyNames_Correct()
+        {
+            var payload = new DialogDismissedPayload
+            {
+                Reason = BrzPaymentDialogDismissReason.CloseTapped,
+                Data = "d"
+            };
+            string json = JsonConvert.SerializeObject(payload);
+            Assert.IsTrue(json.Contains("\"reason\""));
+            Assert.IsTrue(json.Contains("\"data\""));
+        }
+
+        [Test]
+        public void DialogPayload_Roundtrip_PreservesAllFields()
+        {
+            var payload = new DialogDismissedPayload
+            {
+                Reason = BrzPaymentDialogDismissReason.DirectPaymentTapped,
+                Data = "{\"url\":\"https://pay.breeze.cash/abc\"}"
+            };
+            string json = JsonConvert.SerializeObject(payload);
+            var rt = JsonConvert.DeserializeObject<DialogDismissedPayload>(json);
+            Assert.AreEqual(BrzPaymentDialogDismissReason.DirectPaymentTapped, rt.Reason);
+            Assert.AreEqual("{\"url\":\"https://pay.breeze.cash/abc\"}", rt.Data);
+        }
+
+        [Test]
+        public void DialogPayload_Roundtrip_NullData()
+        {
+            var payload = new DialogDismissedPayload
+            {
+                Reason = BrzPaymentDialogDismissReason.CloseTapped,
+                Data = null
+            };
+            string json = JsonConvert.SerializeObject(payload);
+            var rt = JsonConvert.DeserializeObject<DialogDismissedPayload>(json);
+            Assert.AreEqual(BrzPaymentDialogDismissReason.CloseTapped, rt.Reason);
+            Assert.IsNull(rt.Data);
+        }
+
+        [Test]
+        public void DialogPayload_Roundtrip_EmptyData()
+        {
+            var payload = new DialogDismissedPayload
+            {
+                Reason = BrzPaymentDialogDismissReason.AppStoreTapped,
+                Data = ""
+            };
+            string json = JsonConvert.SerializeObject(payload);
+            var rt = JsonConvert.DeserializeObject<DialogDismissedPayload>(json);
+            Assert.AreEqual(BrzPaymentDialogDismissReason.AppStoreTapped, rt.Reason);
+            Assert.AreEqual("", rt.Data);
+        }
     }
 }
