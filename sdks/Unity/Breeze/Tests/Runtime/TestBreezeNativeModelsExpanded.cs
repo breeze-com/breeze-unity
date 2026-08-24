@@ -161,6 +161,25 @@ namespace BreezeSdk.Runtime.Tests
             Assert.AreEqual(BrzPaymentOptionsTheme.Auto, request.Theme);
         }
 
+        [Test]
+        public void Request_JsonPropertyNames_AreCorrect()
+        {
+            var request = new BrzShowPaymentOptionsDialogRequest
+            {
+                Title = "T",
+                ProductDisplayInfo = new BrzProductDisplayInfo { DisplayName = "P" },
+                DirectPaymentUrl = "https://pay.breeze.cash/test",
+                Data = "d",
+                Theme = BrzPaymentOptionsTheme.Light
+            };
+            string json = JsonConvert.SerializeObject(request);
+            Assert.IsTrue(json.Contains("\"title\""));
+            Assert.IsTrue(json.Contains("\"product\""));
+            Assert.IsTrue(json.Contains("\"directPaymentUrl\""));
+            Assert.IsTrue(json.Contains("\"data\""));
+            Assert.IsTrue(json.Contains("\"theme\""));
+        }
+
         // ─── BrzProductDisplayInfo edge cases ───────────────────────────────
 
         [Test]
@@ -216,6 +235,25 @@ namespace BreezeSdk.Runtime.Tests
             string json = JsonConvert.SerializeObject(product);
             var rt = JsonConvert.DeserializeObject<BrzProductDisplayInfo>(json);
             Assert.AreEqual("Test \"Product\" with <html> & 'quotes'", rt.DisplayName);
+        }
+
+        [Test]
+        public void Product_JsonPropertyNames_AreCorrect()
+        {
+            var product = new BrzProductDisplayInfo
+            {
+                DisplayName = "Coins",
+                OriginalPrice = "$9.99",
+                BreezePrice = "$7.99",
+                Decoration = "20% off",
+                ProductIconUrl = "https://cdn.example.com/icon.png"
+            };
+            string json = JsonConvert.SerializeObject(product);
+            Assert.IsTrue(json.Contains("\"displayName\""));
+            Assert.IsTrue(json.Contains("\"originalPrice\""));
+            Assert.IsTrue(json.Contains("\"breezePrice\""));
+            Assert.IsTrue(json.Contains("\"decoration\""));
+            Assert.IsTrue(json.Contains("\"productIconUrl\""));
         }
 
         // ─── BrzShowPaymentOptionsResultCode ────────────────────────────────
