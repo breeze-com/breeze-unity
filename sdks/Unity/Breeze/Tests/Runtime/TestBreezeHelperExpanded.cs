@@ -294,6 +294,18 @@ namespace BreezeSdk.Runtime.Tests
             Assert.AreEqual("AA+/", result);
         }
 
+        [Test]
+        public void ConvertBase64UrlToBase64_EmptyString_ReturnsEmpty()
+        {
+            Assert.AreEqual(string.Empty, BreezeBase64Helper.ConvertBase64UrlToBase64(string.Empty));
+        }
+
+        [Test]
+        public void ConvertBase64ToBase64Url_EmptyString_ReturnsEmpty()
+        {
+            Assert.AreEqual(string.Empty, BreezeBase64Helper.ConvertBase64ToBase64Url(string.Empty));
+        }
+
         // ─── DecodeBase64UrlToBytes ─────────────────────────────────────────
 
         [Test]
@@ -388,6 +400,14 @@ namespace BreezeSdk.Runtime.Tests
             long millis = original.ToUnixTimeMilliseconds();
             var result = millis.ToDateTimeFromUnixTimeMilliseconds();
             Assert.AreEqual(original, result);
+        }
+
+        [Test]
+        public void ToDateTimeFromUnixTimeMilliseconds_KnownValue_ReturnsExpectedDateTime()
+        {
+            // 946 684 800 000 ms = 2000-01-01 00:00:00 UTC (symmetric with ToUnixTimeMilliseconds_KnownDatetime_ReturnsExpectedMs)
+            var result = 946_684_800_000L.ToDateTimeFromUnixTimeMilliseconds();
+            Assert.AreEqual(new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc), result);
         }
 
         // ─── BreezeConstants ────────────────────────────────────────────────
