@@ -253,6 +253,20 @@ namespace BreezeSdk.Runtime.Tests
         }
 
         [Test]
+        public void DecodeBase64UrlToString_DashChar_DecodesCorrectly()
+        {
+            // "WFk-" is base64url for "XY>" — '-' maps to '+' before standard base64 decode
+            Assert.AreEqual("XY>", BreezeBase64Helper.DecodeBase64UrlToString("WFk-"));
+        }
+
+        [Test]
+        public void DecodeBase64UrlToString_UnderscoreChar_DecodesCorrectly()
+        {
+            // "WFk_" is base64url for "XY?" — '_' maps to '/' before standard base64 decode
+            Assert.AreEqual("XY?", BreezeBase64Helper.DecodeBase64UrlToString("WFk_"));
+        }
+
+        [Test]
         public void DecodeBase64ToBytes_ReturnsCorrectLength()
         {
             byte[] bytes = BreezeBase64Helper.DecodeBase64ToBytes("AQID"); // [1,2,3]
@@ -306,6 +320,12 @@ namespace BreezeSdk.Runtime.Tests
             Assert.AreEqual(string.Empty, BreezeBase64Helper.ConvertBase64ToBase64Url(string.Empty));
         }
 
+        [Test]
+        public void DecodeBase64ToString_EmptyString_ReturnsEmpty()
+        {
+            Assert.AreEqual(string.Empty, BreezeBase64Helper.DecodeBase64ToString(string.Empty));
+        }
+
         // ─── DecodeBase64UrlToBytes ─────────────────────────────────────────
 
         [Test]
@@ -314,6 +334,14 @@ namespace BreezeSdk.Runtime.Tests
             // "SGVsbG8gV29ybGQ" is base64url for "Hello World" — length%4==3, one '=' restored
             byte[] bytes = BreezeBase64Helper.DecodeBase64UrlToBytes("SGVsbG8gV29ybGQ");
             Assert.AreEqual("Hello World", System.Text.Encoding.UTF8.GetString(bytes));
+        }
+
+        [Test]
+        public void DecodeBase64UrlToBytes_EmptyString_ReturnsEmptyArray()
+        {
+            byte[] bytes = BreezeBase64Helper.DecodeBase64UrlToBytes(string.Empty);
+            Assert.IsNotNull(bytes);
+            Assert.AreEqual(0, bytes.Length);
         }
 
         [Test]
