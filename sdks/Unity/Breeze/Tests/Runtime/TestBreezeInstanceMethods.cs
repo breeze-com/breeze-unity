@@ -127,6 +127,15 @@ namespace BreezeSdk.Runtime.Tests
         }
 
         [Test]
+        public void IsPaymentSuccessUrl_WithFragment_ReturnsTrue()
+        {
+            // Uri.AbsolutePath excludes the fragment, so the path check still matches.
+            // Server-side verification is always required regardless.
+            Breeze.Initialize(new BreezeConfiguration { AppScheme = "mygame" });
+            Assert.IsTrue(Breeze.Instance.IsPaymentSuccessUrl("mygame://breeze-payment/purchase/success#receipt"));
+        }
+
+        [Test]
         public void IsPaymentSuccessUrl_HttpsScheme_ReturnsFalse()
         {
             Breeze.Initialize(new BreezeConfiguration { AppScheme = "mygame" });
