@@ -125,10 +125,17 @@ namespace BreezeSdk.Runtime
         {
             if (string.IsNullOrEmpty(url))
                 return false;
-            var uri = new Uri(url);
-            return uri.Scheme == this.configuration.AppScheme
-                && uri.Host == DeepLinkHost
-                && uri.AbsolutePath == SuccessPath;
+            try
+            {
+                var uri = new Uri(url);
+                return uri.Scheme == this.configuration.AppScheme
+                    && uri.Host == DeepLinkHost
+                    && uri.AbsolutePath == SuccessPath;
+            }
+            catch (UriFormatException)
+            {
+                return false;
+            }
         }
 
         /// <summary>
