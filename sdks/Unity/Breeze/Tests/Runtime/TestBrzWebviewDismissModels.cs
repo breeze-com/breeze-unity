@@ -174,5 +174,18 @@ namespace BreezeSdk.Runtime.Tests
             Assert.AreEqual(BrzPaymentWebviewDismissReason.Dismissed, rt.Reason);
             Assert.AreEqual("", rt.Data);
         }
+
+        [Test]
+        public void WebViewPayload_JsonPropertyNames_AreCorrect()
+        {
+            var payload = new WebViewDismissedPayload
+            {
+                Reason = BrzPaymentWebviewDismissReason.Dismissed,
+                Data = "d"
+            };
+            string json = JsonConvert.SerializeObject(payload);
+            Assert.IsTrue(json.Contains("\"reason\""));
+            Assert.IsTrue(json.Contains("\"data\""));
+        }
     }
 }
