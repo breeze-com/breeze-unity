@@ -149,6 +149,22 @@ namespace BreezeSdk.Runtime.Tests
             Assert.IsFalse(Breeze.Instance.IsPaymentSuccessUrl("anothergame://breeze-payment/purchase/success"));
         }
 
+        [Test]
+        public void IsPaymentSuccessUrl_MalformedUrl_ReturnsFalse()
+        {
+            // "not a url" has no scheme — new Uri() would throw UriFormatException without the fix
+            Breeze.Initialize(new BreezeConfiguration { AppScheme = "mygame" });
+            Assert.IsFalse(Breeze.Instance.IsPaymentSuccessUrl("not a url"));
+        }
+
+        [Test]
+        public void IsPaymentSuccessUrl_RelativeUrl_ReturnsFalse()
+        {
+            // A relative path is not a valid absolute URI; must return false, not throw
+            Breeze.Initialize(new BreezeConfiguration { AppScheme = "mygame" });
+            Assert.IsFalse(Breeze.Instance.IsPaymentSuccessUrl("/purchase/success"));
+        }
+
         // ─── NotifyOnPaymentWebviewDismissed ────────────────────────────────
 
         [Test]
