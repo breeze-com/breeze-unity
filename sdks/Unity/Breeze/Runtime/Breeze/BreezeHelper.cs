@@ -71,7 +71,9 @@ namespace BreezeSdk.Runtime
 
         /// <summary>
         /// Encodes a <see cref="NameValueCollection"/> into a URL query string using Unity's URL escaping.
-        /// Keys or values that are <c>null</c> are treated as empty strings.
+        /// On Mono/Unity, entries with a <c>null</c> value are emitted as bare keys (e.g. <c>"key"</c> without <c>=</c>)
+        /// because <c>NameValueCollection.GetValues</c> returns <c>null</c> for such entries rather than a single-element
+        /// array containing <c>null</c>. This differs from the .NET BCL, which would produce <c>"key="</c>.
         /// </summary>
         /// <param name="queryParams">The parameters to encode. Returns an empty string when <c>null</c> or empty.</param>
         /// <returns>A percent-encoded query string without a leading <c>?</c>, e.g. <c>"key1=val1&amp;key2=val2"</c>.</returns>

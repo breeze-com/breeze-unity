@@ -167,14 +167,14 @@ namespace BreezeSdk.Runtime.Tests
         }
 
         [Test]
-        public void BuildQueryString_NullValueParam_HandledGracefully()
+        public void BuildQueryString_NullValueParam_EmitsBareKey()
         {
             // Mono's NameValueCollection.GetValues returns null for a null-valued entry
-            // → hits the else branch in BuildQueryString (key emitted without '=')
+            // → hits the else branch in BuildQueryString → key emitted WITHOUT '='
+            // This differs from BCL .NET, which would produce "key=".
             var nvc = new NameValueCollection { { "key", null } };
             string result = BreezeHelper.BuildQueryString(nvc);
-            Assert.IsNotNull(result);
-            Assert.IsTrue(result.Contains("key"));
+            Assert.AreEqual("key", result, "Null-valued entry should produce bare key without '=' on Mono/Unity");
         }
 
         // ─── GetCurrentTwoLetterIsoRegionName ───────────────────────────────
