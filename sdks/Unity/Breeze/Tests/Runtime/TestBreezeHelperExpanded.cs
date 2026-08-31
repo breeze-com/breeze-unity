@@ -267,6 +267,20 @@ namespace BreezeSdk.Runtime.Tests
         }
 
         [Test]
+        public void DecodeBase64UrlToString_EmptyString_ReturnsEmpty()
+        {
+            // Symmetric with DecodeBase64UrlToBytes_EmptyString_ReturnsEmptyArray and DecodeBase64ToString_EmptyString_ReturnsEmpty
+            Assert.AreEqual(string.Empty, BreezeBase64Helper.DecodeBase64UrlToString(string.Empty));
+        }
+
+        [Test]
+        public void DecodeBase64UrlToString_Mod2Padding_DecodesCorrectly()
+        {
+            // "QQ" has length 2; 2%4==2 so ConvertBase64UrlToBase64 adds "==" → "QQ==" → 'A' (0x41)
+            Assert.AreEqual("A", BreezeBase64Helper.DecodeBase64UrlToString("QQ"));
+        }
+
+        [Test]
         public void DecodeBase64ToBytes_ReturnsCorrectLength()
         {
             byte[] bytes = BreezeBase64Helper.DecodeBase64ToBytes("AQID"); // [1,2,3]
