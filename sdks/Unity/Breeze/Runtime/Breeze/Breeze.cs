@@ -121,6 +121,7 @@ namespace BreezeSdk.Runtime
         /// </summary>
         /// <param name="url">The deep-link URL received via <c>Application.deepLinkActivated</c>.</param>
         /// <returns><c>true</c> if the URL matches the Breeze payment success pattern; otherwise <c>false</c>.</returns>
+        /// <exception cref="UriFormatException">Thrown when <paramref name="url"/> is a non-empty string that cannot be parsed as an absolute URI (e.g. a bare path or a string with no scheme). Pass <c>null</c> or an empty string to receive <c>false</c> without throwing.</exception>
         public bool IsPaymentSuccessUrl(string url)
         {
             if (string.IsNullOrEmpty(url))
