@@ -149,6 +149,24 @@ namespace BreezeSdk.Runtime.Tests
             Assert.IsFalse(Breeze.Instance.IsPaymentSuccessUrl("anothergame://breeze-payment/purchase/success"));
         }
 
+        [Test]
+        public void IsPaymentSuccessUrl_BarePath_ThrowsUriFormatException()
+        {
+            // Pins the XML-doc contract: non-empty strings that cannot be parsed as an
+            // absolute URI (e.g. a bare path with no scheme) throw UriFormatException.
+            Breeze.Initialize(new BreezeConfiguration { AppScheme = "mygame" });
+            Assert.Throws<UriFormatException>(() => Breeze.Instance.IsPaymentSuccessUrl("/purchase/success"));
+        }
+
+        [Test]
+        public void IsPaymentSuccessUrl_NoScheme_ThrowsUriFormatException()
+        {
+            // A relative path with no leading slash and no scheme also lacks an absolute
+            // URI form and therefore throws UriFormatException.
+            Breeze.Initialize(new BreezeConfiguration { AppScheme = "mygame" });
+            Assert.Throws<UriFormatException>(() => Breeze.Instance.IsPaymentSuccessUrl("breeze-payment/purchase/success"));
+        }
+
         // ─── NotifyOnPaymentWebviewDismissed ────────────────────────────────
 
         [Test]
