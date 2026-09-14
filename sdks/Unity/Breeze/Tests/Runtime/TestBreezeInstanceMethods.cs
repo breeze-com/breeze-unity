@@ -303,5 +303,37 @@ namespace BreezeSdk.Runtime.Tests
         {
             Assert.AreEqual("\"LoadError\"", JsonConvert.SerializeObject(BrzPaymentWebviewDismissReason.LoadError));
         }
+
+        // ─── SDK delegation smoke tests ─────────────────────────────────────
+
+        [Test]
+        public void DismissPaymentPageView_DoesNotThrow()
+        {
+            Breeze.Initialize(new BreezeConfiguration { AppScheme = "mygame" });
+            Assert.DoesNotThrow(() => Breeze.Instance.DismissPaymentPageView());
+        }
+
+        [Test]
+        public void ShowPaymentOptionsDialog_DoesNotThrow()
+        {
+            Breeze.Initialize(new BreezeConfiguration { AppScheme = "mygame" });
+            var request = new BrzShowPaymentOptionsDialogRequest
+            {
+                Title = "Buy Coins",
+                DirectPaymentUrl = "https://pay.breeze.cash/test"
+            };
+            Assert.DoesNotThrow(() => Breeze.Instance.ShowPaymentOptionsDialog(request));
+        }
+
+        [Test]
+        public void ShowPaymentWebview_DoesNotThrow()
+        {
+            Breeze.Initialize(new BreezeConfiguration { AppScheme = "mygame" });
+            var request = new BrzShowPaymentWebviewRequest
+            {
+                DirectPaymentUrl = "https://pay.breeze.cash/checkout/abc"
+            };
+            Assert.DoesNotThrow(() => Breeze.Instance.ShowPaymentWebview(request));
+        }
     }
 }
