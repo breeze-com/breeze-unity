@@ -96,11 +96,28 @@ namespace BreezeSdk.Runtime.Tests
         }
 
         [Test]
-        public void UpdateUrlQueryParams_NullValueInParam()
+        public void UpdateUrlQueryParams_NullValueParam_KeyAbsentFromResult()
         {
+            // Mono's NameValueCollection.GetValues returns null for a null-valued entry →
+            // the Replace branch removes the key from queryParams and skips re-adding it,
+            // so the null-valued key never appears in the result URL.
             var extra = new NameValueCollection { { "key", null } };
             string result = BreezeHelper.UpdateUrlQueryParams("https://example.com/path", extra);
-            Assert.IsNotNull(result);
+            Assert.AreEqual("https://example.com/path", result,
+                "Null-valued extra key should be absent from result URL on Mono/Unity");
+        }
+
+        [Test]
+        public void UpdateUrlQueryParams_NullValueParam_RemovesExistingKey()
+        {
+            // Symmetric with BuildQueryString_NullValueParam_EmitsBareKey: on Mono/Unity,
+            // GetValues returns null for a null-valued entry → the Replace branch removes the
+            // existing key from queryParams and skips re-adding it, deleting the key from the URL.
+            string url = "https://example.com/path?key=old";
+            var extra = new NameValueCollection { { "key", null } };
+            string result = BreezeHelper.UpdateUrlQueryParams(url, extra);
+            Assert.AreEqual("https://example.com/path", result,
+                "Null-valued extraParam should delete the matching key from the result URL on Mono/Unity");
         }
 
         [Test]
