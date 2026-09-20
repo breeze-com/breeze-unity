@@ -33,7 +33,12 @@ namespace BreezeSdk.Runtime
         /// Merges or appends query parameters into an existing URL.
         /// </summary>
         /// <param name="url">The base URL whose query string will be modified.</param>
-        /// <param name="extraParams">The parameters to merge in.</param>
+        /// <param name="extraParams">
+        /// The parameters to merge in. On Mono/Unity, a null-valued entry (where
+        /// <c>NameValueCollection.GetValues</c> returns <c>null</c>) is treated as a deletion
+        /// in replace mode: the key is removed from the result URL rather than set to an empty
+        /// or bare value. This mirrors the null-value behaviour documented on <see cref="BuildQueryString"/>.
+        /// </param>
         /// <param name="appendOnly">
         /// When <c>true</c>, parameters are added without removing existing keys (multi-value allowed).
         /// When <c>false</c> (default), existing keys are replaced by the values in <paramref name="extraParams"/>.
