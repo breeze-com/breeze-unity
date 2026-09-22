@@ -308,6 +308,16 @@ namespace BreezeSdk.Runtime.Tests
         }
 
         [Test]
+        public void DecodeBase64ToBytes_EmptyString_ReturnsEmptyArray()
+        {
+            // Symmetric with DecodeBase64UrlToBytes_EmptyString_ReturnsEmptyArray and
+            // DecodeBase64ToString_EmptyString_ReturnsEmpty — pins the empty-input contract.
+            byte[] bytes = BreezeBase64Helper.DecodeBase64ToBytes(string.Empty);
+            Assert.IsNotNull(bytes);
+            Assert.AreEqual(0, bytes.Length);
+        }
+
+        [Test]
         public void ConvertBase64UrlToBase64_PaddingMod2()
         {
             // Length % 4 == 2 → should add ==
